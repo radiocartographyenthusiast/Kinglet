@@ -11,6 +11,7 @@ Requirements: <br>
 -GPSd <br>
 -aircrack-ng suite <br>
 -geopy <br>
+-gpsd-py3 <br>
  <br>
 Credits: <br>
 -evilsocket <br>
