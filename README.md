@@ -17,6 +17,7 @@ Requirements: <br>
 -aircrack-ng suite <br>
 -geopy <br>
 -gpsd-py3 <br>
+-if no suitable external adapter and running raspbian, you may need something else to allow your in-built wireless adapter to be put into monitor mode
  <br>
 Instructions: <br>
 After all requirements are met, once GPSd is running and your GPS is plugged in, run rce.py <br>
