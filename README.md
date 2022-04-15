@@ -7,7 +7,7 @@ Perhaps if we wrapped some Python around everything to launch/terminate airodump
 like Sparrow-Wifi or Falcon, we can have a smarter system by geofencing with geopy
  <br>
 Requirements: <br>
--Python <br>
+-Python 3 <br>
 -GPSd <br>
 -aircrack-ng suite <br>
 -geopy <br>
