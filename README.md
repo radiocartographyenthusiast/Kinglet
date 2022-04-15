@@ -26,6 +26,9 @@ When reaching more than 20 feet or so from this point, monitor mode will automat
 Upon returning to within 20 feet or so from this point, monitor mode will automatically be disabled and airodump will be terminated <br>
 Currently, after the initial settings file has been generated, it is recommended to add your WiFi SSID as a new line to the bottom of the file <br>
  <br>
+If you've never run airodump-ng before, don't worry, it will drop logs in the same folder as this script <br>
+If you have, make sure you know where it's dumping <br>
+ <br>
 Credits: <br>
 -evilsocket <br>
 -ghostop14 <br>
