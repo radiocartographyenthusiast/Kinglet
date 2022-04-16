@@ -25,7 +25,7 @@ WaitForLockBool = False
 MonitorEnabled = False
 HomeLocation = None
 SetHome = False
-SavedDataFilename = "settings.deez"
+SavedDataFilename = None
 HomeWifiName = None
 HomeWifiKey = None
 
@@ -111,6 +111,7 @@ def initstartup():
                             saving = open(SavedDataFilename, 'w')                              #saving
                             saving.write(str(packet.lat) + "\r\n")                             #saving
                             saving.write(str(packet.lon) + "\r\n")                             #saving
+                            saving.write("dummy_ssid")                                         #saving
                             saving.close()                                                     #saving
                             mylogger(SavedDataFilename + " created or updated")                #saving
                             SetHome = False                                                    #saving
@@ -120,7 +121,6 @@ def initstartup():
                             mylogger("Away from HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
                             #we are away from the home
                             if MonitorEnabled == False:
-                                #stop flask if it's running
                                 #we aren't monitoring, we must be leaving
                                 startmoniface()
                                 MonitorEnabled = True
@@ -139,9 +139,8 @@ def initstartup():
                                 stopmoniface()
                                 MonitorEnabled = False
                                 #reconnect to home wifi
-                                if HomeWifiName != None:
+                                if HomeWifiName != "dummy_ssid":
                                     os.system(f'''cmd /c "netsh wlan connect name = {HomeWifiName}"''')
-                                #start flask
                             time.sleep(4)
                     time.sleep(1)
                 except:
