@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h4>{{ title }}</h4>
+Mode: {{ GPS_mode }} <br>
+Lat: {{ GPS_lat }}, Lon: {{ GPS_lon }}<br>
+Current location: {{ CurLoc }}<br>
+Home location: {{ HomeLoc }} <br>
+Distance from Home location: {{ CurDist }} ft <br>
+
+{% endblock %}
