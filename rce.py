@@ -28,6 +28,8 @@ class MySettings:
     global PowerOn
     global SavedDataFilename
     global HomeWifiName
+    global HomeWifiKey
+    global TriggerDistance
     global HomeLat
     global HomeLon
     def __init__(self):
@@ -38,7 +40,8 @@ class MySettings:
             hlat = float(loaded.readline())                                                    #loading
             hlon = float(loaded.readline())                                                    #loading
             self.HomeWifiName = loaded.readline()                                                   #loading
-    #        HomeWifiKey = loaded.readline()                                                    #loading
+            self.HomeWifiKey = loaded.readline()                                                    #loading
+            self.TriggerDistance = int(loaded.readline())
             #mylogger("Loaded data: " + loaded)                                                #loading
             mylogger("Loaded latitude: " + str(hlat) + ", " + "loaded longitude: " + str(hlon))#loading
             loaded.close()                                                                     #loading
@@ -141,12 +144,14 @@ def initstartup(mySettings):
                             saving.write(str(packet.lat) + "\r\n")                             #saving
                             saving.write(str(packet.lon) + "\r\n")                             #saving
                             saving.write("dummy_ssid")                                         #saving
+                            saving.write("dummy_key")                                         #saving
+                            saving.write("7")                                         #saving
                             saving.close()                                                     #saving
                             mylogger(mySettings.SavedDataFilename + " created or updated")                #saving
                             SetHome = False                                                    #saving
                     else:
                         curdistance = distance.distance(CurrentLocation, location.Point(mySettings.HomeLat, mySettings.HomeLon)).feet
-                        if curdistance > 20:
+                        if curdistance > mySettings.TriggerDistance:                                                                                                                         #DISTANCE IN FEET TO ACTIVATE AIRODUMP
                             mylogger("Away from HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
                             #we are away from the home
                             if MonitorEnabled == False:
@@ -255,7 +260,8 @@ def settingspage():
         HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
         HomeSSID=mySettings.HomeWifiName,
         HomeLati=mySettings.HomeLat,
-        HomeLong=mySettings.HomeLon
+        HomeLong=mySettings.HomeLon,
+        triggerDistance=mySettings.TriggerDistance
     )
 
 #main
