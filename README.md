@@ -1,5 +1,6 @@
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
+![image](https://github.com/radiocartographyenthusiast/airotool/blob/main/flask1.PNG)
 0.03 <b>Yeast <i>Rising</i></b> <br>
  <br>
 airodump-ng and GPSd have been found to play nicely with each other, but how can usage be made easier? <br>
@@ -19,8 +20,6 @@ like Sparrow-Wifi or Falcon, we can have a smarter system by geofencing with geo
 -gpsd-py3 <br>
 -if no suitable external adapter and running raspbian, you may need something else to allow your in-built wireless adapter to be put into monitor mode <br>
  <br>
- ![image](https://github.com/radiocartographyenthusiast/airotool/blob/main/flask1.PNG)
- 
 <h3>Instructions:</h3> <br>
 After all requirements are met, once GPSd is running and your GPS is plugged in, run rce.py <br>
 On this first run it'll generate a settings file (settings.deez) with its "Home Coordinates" <br>
