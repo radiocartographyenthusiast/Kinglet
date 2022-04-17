@@ -1,7 +1,7 @@
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-![image](https://github.com/radiocartographyenthusiast/airotool/blob/main/flask1.PNG)
-0.03 <b>Yeast <i>Rising</i></b> <br>
+![image](https://github.com/radiocartographyenthusiast/airotool/blob/main/flask1.PNG) <br>
+0.04 <b>Yeast <i>Rising</i></b> <br>
  <br>
 airodump-ng and GPSd have been found to play nicely with each other, but how can usage be made easier? <br>
 Perhaps if we wrapped some Python around everything to launch/terminate airodump instances, kind of <br>
