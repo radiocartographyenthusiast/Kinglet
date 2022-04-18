@@ -1,12 +1,11 @@
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-![image](https://github.com/radiocartographyenthusiast/airotool/blob/main/flask1.PNG) <br>
 0.05 <b>Yeast <i>Rising</i></b> <br>
  <br>
 ~~airodump-ng and GPSd have been found to play nicely with each other, but how can usage be made easier? <br>
 Perhaps if we wrapped some Python around everything to launch/terminate airodump instances, kind of <br>
 like Sparrow-Wifi or Falcon, we can have a smarter system by geofencing with geopy~~ <br>
-Airodump is being dropped due to inconsistent performance with GPSd. <br>
+Airodump is being dropped due to inconsistent performance with GPSd, but I'll still leave it as an option for those who prefer it <br>
 Between Bettercap and Sparrow-WiFi, Sparrow-WiFi's Agent operates much like how I envisioned for data collection. <br>
 My goal is to generate heatmaps of reception for home and local networks. What I have in mind is thorough but could result in lots of junk data, though, or at least a bulk to digest by something beefier than a Pi0. <br>
  <br>
@@ -22,7 +21,7 @@ My goal is to generate heatmaps of reception for home and local networks. What I
 -Python: gpsd-py3 //I know, I'm silly using 2 GPSd libs at once<br>
 -if no suitable external adapter and running raspbian, you may need something else to allow your in-built wireless adapter to be put into monitor mode <br>
  <br>
-<h3>Kinglet (Stripped out Sparrow-WiFi Agent) Requirements:</h3> <br>
+<h3>Sparrow-WiFi: Kinglet (Stripped out Sparrow-WiFi Agent) Requirements:</h3> <br>
 -Python: python-dateutil <br>
 -Python: gps3 //I know, I'm silly using 2 GPSd libs at once<br>
  <br>
