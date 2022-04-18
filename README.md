@@ -11,9 +11,8 @@ Between Bettercap and Sparrow-WiFi, Sparrow-WiFi's Agent operates much like how 
 My goal is to generate heatmaps of reception for home and local networks. What I have in mind is thorough but could result in lots of junk data, though, or at least a bulk to digest by something beefier than a Pi0. <br>
  <br>
 ⚠ Reconnect to home wifi upon return is still being tested ⚠ <br>
-✔ Managing of airodump-ng process based on location <br>
+✔ Managing of Sparrow-WiFi: Kinglet process based on location <br>
 ✔ Start/stop monitor mode automatically; can currently be changed by editing monstart.sh <br>
-❌ Tweak not included to put raspi0w in-built wifi into monitor mode <br>
  <br>
 <h3>Main Requirements:</h3> <br>
 -Sys: Python 3 <br>
@@ -38,6 +37,7 @@ If you've never run airodump-ng before, don't worry, it will drop logs in the sa
 If you have, make sure you know where it's dumping <br>
  <br>
 <h3>Solo ISO Now Available!</h3> <br>
+Released ISO version may not always match repo version <br>
 Use Balena Etcher to flash the image to your micro sd card <br>
 <b>Default password included</b> since they wanted to change things<br>
 Default username:password is <b>rad</b>:<b>io</b> <br>
@@ -59,7 +59,7 @@ network={
 }
 ```
 <br>
-<h3>Credits:</h3> <br>
--evilsocket <br>
--ghostop14 <br>
+<h3>Credits and Special Mentions:</h3> <br>
+-evilsocket > Pwnagotchi <br>
+-ghostop14 > Sparrow-WiFi <br>
 -yanewby > https://forums.raspberrypi.com/viewtopic.php?t=23440 <br>
