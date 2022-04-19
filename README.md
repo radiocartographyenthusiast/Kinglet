@@ -1,7 +1,7 @@
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
 0.05 <b>Yeast <i>Rising</i></b> <br>
-For Pi0W it requires the 7/10/2019 release of Raspbian because that's the latest version to support the Re4son-Pi-Kernel. This is to allow the onboard wifi to be put into monitor mode. <br> 
+For Pi0W it requires a certain release of Raspbian because of the Re4son-Pi-Kernel. This is to allow the onboard wifi to be put into monitor mode. <br> 
  <br>
 ~~airodump-ng and GPSd have been found to play nicely with each other, but how can usage be made easier? <br>
 Perhaps if we wrapped some Python around everything to launch/terminate airodump instances, kind of <br>
