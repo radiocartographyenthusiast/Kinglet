@@ -63,17 +63,6 @@ class MySettings:
             except:
                 print("ERROR: Unable to read config file: ", self.SavedDataFilename)
 
-"""            hlat = float(loaded.readline())                                                    #loading
-            hlon = float(loaded.readline())                                                    #loading
-            self.HomeWifiName = loaded.readline()                                                   #loading
-            self.HomeWifiKey = loaded.readline()                                                    #loading
-            self.TriggerDistance = int(loaded.readline())
-            #mylogger("Loaded data: " + loaded)                                                #loading
-            mylogger("Loaded latitude: " + str(hlat) + ", " + "loaded longitude: " + str(hlon))#loading
-            loaded.close()                                                                     #loading
-            self.HomeLat = hlat
-            self.HomeLon = hlon"""
-
 class GPSButton:
     global gstatus
     global gcolor
@@ -135,7 +124,6 @@ def initstartup(mySettings):
                 time.sleep(14)
             time.sleep(1)
         except:
-            #mylogger("Exception Handling: GPS probably isn't active")
             #GPSd-py3 will tell us, no need
             time.sleep(5)
 
@@ -155,14 +143,12 @@ def initstartup(mySettings):
             packet = gpsd.get_current()
             CurrentLocation = location.Point(packet.lat, packet.lon)
             if packet.mode >= 2:
-                #mylogger("GPS locked")
                 #Check against geofence, then enable or disable monitor mode
                 try:
                     if mySettings.HomeLat == None:
                         mylogger("HomeLat is None")
                         if SetHome:                                                            #saving
                             HomeLocation = CurrentLocation                                     #saving
-                            #mylogger("savecfg unimplemented[1]")                              #saving
                             myCFG = configparser.ConfigParser()
                             myCFG['airotool'] = { 'hLat': mySettings.HomeLat,
                                                   'hLon': mySettings.HomeLon,
@@ -174,16 +160,6 @@ def initstartup(mySettings):
                                     myCFG.write(configfile)
                             except:
                                 mylogger("error generating config")
-                            """mylogger(str(packet.lat) + ", " + str(packet.lon))                 #saving
-                            #mylogger(HomeLocation)                                            #saving
-                            #MySettings.PowerOn = False                                                   #saving
-                            saving = open(mySettings.SavedDataFilename, 'w')                              #saving
-                            saving.write(str(packet.lat) + "\r\n")                             #saving
-                            saving.write(str(packet.lon) + "\r\n")                             #saving
-                            saving.write("dummy_ssid")                                         #saving
-                            saving.write("dummy_key")                                         #saving
-                            saving.write("7")                                         #saving
-                            saving.close()                                                     #saving"""
                             mylogger(mySettings.SavedDataFilename + " created or updated")                #saving
                             SetHome = False                                                    #saving
                     else:
