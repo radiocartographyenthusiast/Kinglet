@@ -31,7 +31,6 @@ import re
 
 import argparse
 import configparser
-# import subprocess
 
 from socket import *
 from time import sleep
@@ -349,13 +348,4 @@ if __name__ == '__main__':
     
     # -------------- This is the shutdown process --------------
     #stopRecord()
-
-    #for curKey in lockList.keys():
-    #    curLock = lockList[curKey]
-    #    try:
-    #        curLock.release()
-    #    except:
-    #        pass
-
-    # os._exit(0)
     #exit(0)
