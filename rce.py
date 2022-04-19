@@ -22,6 +22,8 @@ from geopy import distance, location
 from flask import render_template
 from flask import Flask
 from os import environ
+import configparser
+import argparse
 
 #global var block
 class MySettings:
@@ -32,12 +34,36 @@ class MySettings:
     global TriggerDistance
     global HomeLat
     global HomeLon
+    global useAirodump
+    global WaitForLockBool
     def __init__(self):
+        self.WaitForLockBool = True
+        self.useAirodump = False
         self.SavedDataFilename = "settings.deez"
         self.PowerOn = True
         if os.path.exists(self.SavedDataFilename):                                                  #loading
-            loaded = open(self.SavedDataFilename)                                                   #loading
-            hlat = float(loaded.readline())                                                    #loading
+            savedsettings = configparser.ConfigParser(self.SavedDataFilename)            #loading         
+            try:
+                savedsettings.read(self.SavedDataFilename)
+                options = savedsettings.options("airotool")
+                for option in options:
+                    try:
+                        if option =='hLat':
+                            self.HomeLat = cfgParser.get(section, option)
+                        elif option == 'hLon':
+                            self.HomeLon = cfgParser.get(section, option)
+                        elif option == 'homeWifiName':
+                            self.HomeWifiName = cfgParser.get(section, option)
+                        elif option == 'homeWifiKey':
+                            self.HomeWifiKey=cfgParser.get(section, option)
+                        elif option == 'triggerDistance':
+                            self.TriggerDistance=cfgParser.get(section, option)
+                    except:
+                        print("exception on %s!" % option)
+            except:
+                print("ERROR: Unable to read config file: ", self.SavedDataFilename)
+
+"""            hlat = float(loaded.readline())                                                    #loading
             hlon = float(loaded.readline())                                                    #loading
             self.HomeWifiName = loaded.readline()                                                   #loading
             self.HomeWifiKey = loaded.readline()                                                    #loading
@@ -46,7 +72,8 @@ class MySettings:
             mylogger("Loaded latitude: " + str(hlat) + ", " + "loaded longitude: " + str(hlon))#loading
             loaded.close()                                                                     #loading
             self.HomeLat = hlat
-            self.HomeLon = hlon
+            self.HomeLon = hlon"""
+
 class GPSButton:
     global gstatus
     global gcolor
@@ -96,14 +123,13 @@ def initstartup(mySettings):
     SetHome = False
     HomeWifiKey = None
     #gps initialization
-    WaitForLockBool = True
-    while WaitForLockBool:
+    while mySettings.WaitForLockBool:
         try:
             gpsd.connect()
             packet = gpsd.get_current()
             if packet.mode >= 2:
                 mylogger("GPS locked")
-                WaitForLockBool = False
+                mySettings.WaitForLockBool = False
             else:
                 mylogger("No lock")
                 time.sleep(14)
@@ -137,7 +163,18 @@ def initstartup(mySettings):
                         if SetHome:                                                            #saving
                             HomeLocation = CurrentLocation                                     #saving
                             #mylogger("savecfg unimplemented[1]")                              #saving
-                            mylogger(str(packet.lat) + ", " + str(packet.lon))                 #saving
+                            myCFG = configparser.ConfigParser()
+                            myCFG['airotool'] = { 'hLat': mySettings.HomeLat,
+                                                  'hLon': mySettings.HomeLon,
+                                                  'homeWifiName': mySettings.HomeWifiName,
+                                                  'homeWifiKey': mySettings.HomeWifiKey,
+                                                  'triggerDistance': mySettings.TriggerDistance }
+                            try:
+                                with open(mySettings.SavedDataFilename, 'w') as configfile:
+                                    myCFG.write(configfile)
+                            except:
+                                mylogger("error generating config")
+                            """mylogger(str(packet.lat) + ", " + str(packet.lon))                 #saving
                             #mylogger(HomeLocation)                                            #saving
                             #MySettings.PowerOn = False                                                   #saving
                             saving = open(mySettings.SavedDataFilename, 'w')                              #saving
@@ -146,25 +183,39 @@ def initstartup(mySettings):
                             saving.write("dummy_ssid")                                         #saving
                             saving.write("dummy_key")                                         #saving
                             saving.write("7")                                         #saving
-                            saving.close()                                                     #saving
+                            saving.close()                                                     #saving"""
                             mylogger(mySettings.SavedDataFilename + " created or updated")                #saving
                             SetHome = False                                                    #saving
                     else:
                         curdistance = distance.distance(CurrentLocation, location.Point(mySettings.HomeLat, mySettings.HomeLon)).feet
                         if curdistance > mySettings.TriggerDistance:                                                                                                                         #DISTANCE IN FEET TO ACTIVATE AIRODUMP
-                            mylogger("Away from HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
+                            #mylogger("Away from HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
                             #we are away from the home
                             if MonitorEnabled == False:
                                 #we aren't monitoring, we must be leaving
                                 startmoniface()
                                 MonitorEnabled = True
-                                #start airodump process
-                                apcmd = "sudo airodump-ng --gpsd -w rce --manufacturer --wps --output-format kismet wlan0mon"
-                                apcmd = apcmd.split(' ')
-                                airoproc = subprocess.Popen(apcmd)
-                            time.sleep(4)
+                                if mySettings.useAirodump:
+                                    try:
+                                        #start airodump process
+                                        apcmd = "sudo airodump-ng --gpsd -w rce --manufacturer --wps --output-format kismet wlan0mon"
+                                        apcmd = apcmd.split(' ')
+                                        airoproc = subprocess.Popen(apcmd)
+                                        mylogger('airodump-ng launched')
+                                    except:
+                                        mylogger('Error launching airodump-ng')
+                                else:
+                                    try:
+                                        #start Kinglet process
+                                        apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py"
+                                        apcmd = apcmd.split(' ')
+                                        airoproc = subprocess.Popen(apcmd)
+                                        mylogger('Kinglet launched')
+                                    except:
+                                        mylogger('Error launching Kinglet')
+                            time.sleep(59)
                         else:
-                            mylogger("Near HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
+                            #mylogger("Near HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
                             #we are near or at home
                             if MonitorEnabled:
                                 #we are monitoring, we must be returning
@@ -175,7 +226,7 @@ def initstartup(mySettings):
                                 #reconnect to home wifi
                                 if mySettings.HomeWifiName != "dummy_ssid":
                                     os.system(f'''cmd /c "netsh wlan connect name = {mySettings.HomeWifiName}"''')
-                            time.sleep(4)
+                            time.sleep(29)
                     time.sleep(1)
                 except:
                     #Control + C was pressed
@@ -190,10 +241,10 @@ def initstartup(mySettings):
                         MonitorEnabled = False
             else:
                 #mylogger("No lock")
-                time.sleep(1)
+                time.sleep(15)
         except:
             mylogger("GPSd might be pitching a fit again")
-            time.sleep(5)
+            time.sleep(15)
 
 def initflask(mySettings):
     HOST = environ.get('SERVER_HOST', '0.0.0.0')
@@ -266,8 +317,13 @@ def settingspage():
 
 #main
 if __name__ == '__main__':
+    argparser = argparse.ArgumentParser(description='')
+    argparser.add_argument('--airodump', help="Use airodump-ng instead of Sparrow-WiFi (Ex: python3 rce.py --airodump true", default='', required=False)
+    args = argparser.parse_args()
     #initstartup()
     mySettings = MySettings()
+    if args.airodump == 'true':
+        mySettings.useAirodump = True
     mgrthread = threading.Thread(name="manager", target=initstartup, args=[mySettings])
     mgrthread.start()
     flaskthread = threading.Thread(name="flask", target=initflask, args=[mySettings], daemon=True)
