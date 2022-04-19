@@ -38,8 +38,7 @@ If you have, make sure you know where it's dumping <br>
 Released ISO version may not always match repo version <br>
 Use Balena Etcher to flash the image to your micro sd card <br>
 <b>Default password included</b> since they wanted to change things<br>
-Default username:password is <b>pi</b>:<b>Kinglet</b>, root password is the same <br>
-Except v0.02, which is rad:io <br>
+Default username:password is <b>rad</b>:<b>io</b> <br>
 If you have Apple's Bonjour Services, you can find it on the network at airotool.local for ssh and sftp access <br>
 rce.py would run automatically on startup, but init.d, systemd, and rc.local didn't really want to work for me. Probably because python script, but I think I might know a way around it <br>
 If your pi is in the same family as the Pi Zero (First Gen), then this image should work for you <br>
