@@ -62,3 +62,5 @@ network={
 -evilsocket > Pwnagotchi <br>
 -ghostop14 > Sparrow-WiFi <br>
 -yanewby > https://forums.raspberrypi.com/viewtopic.php?t=23440 <br>
+<h6>Required Disclosure as per GNU GPL v3:</h6>
+kinglet.py is directly derived from sparrowwifiagent.py <br>
