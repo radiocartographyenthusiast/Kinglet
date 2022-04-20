@@ -32,6 +32,7 @@ On this first run it'll generate a settings file (settings.deez) with its "Home 
 When reaching more than 20 feet or so from this point, monitor mode will automatically be enabled and airodump will be start <br>
 Upon returning to within 20 feet or so from this point, monitor mode will automatically be disabled and airodump will be terminated <br>
 The triggerDistance is now a settings item <br>
+To use airodump-ng instead of Sparrow-WiFi, launch with the argument ` --airodump true ` <br>
 If you've never run airodump-ng before, don't worry, it will drop logs in the same folder as this script <br>
 If you have, make sure you know where it's dumping <br>
  <br>
@@ -44,9 +45,9 @@ If you have Apple's Bonjour Services, you can find it on the network at airotool
 rce.py would run automatically on startup, but init.d, systemd, and rc.local didn't really want to work for me. Probably because python script, but I think I might know a way around it <br>
 If your pi is in the same family as the Pi Zero (First Gen), then this image should work for you <br>
 Modified MOTD now included <br>
-RNDIS Gadget IP default to 192.168.137.2 from 10.0.0.2 to be more friendly to Windows and its Internet Connection Sharing habits <br>
-Re4son patch to enable monitor mode on pi0w
-Make sure to add your own wpa_supplicant.conf to the root of the boot partition: <br>
+RNDIS Gadget IP default set to 192.168.137.2 from 10.0.0.2, to be more friendly to Windows and its Internet Connection Sharing habits <br>
+Recompiled kernel with Re4son patch to enable monitor mode on pi0w <br>
+Make sure to add your own wpa_supplicant.conf to the root of the boot partition to connect to your wifi automatically: <br>
 
 ``` python
 country=US
@@ -63,5 +64,6 @@ network={
 -evilsocket > Pwnagotchi <br>
 -ghostop14 > Sparrow-WiFi <br>
 -yanewby > https://forums.raspberrypi.com/viewtopic.php?t=23440 <br>
+-re4son
 <h6>Required Disclosure as per GNU GPL v3:</h6>
 $REPO/sparrow-wifi/kinglet.py is directly derived from sparrowwifiagent.py <br>
