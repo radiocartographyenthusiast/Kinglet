@@ -1,7 +1,8 @@
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-0.05 <b>Yeast <i>Rising</i></b> <br>
+0.06 <b>Yeast <i>Rising</i></b> <br>
 For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
+This is included starting with the version 0.1 image release, after having recompiled kernel version 5.15.32 on my Pi0W <br>
  <br>
 ~~airodump-ng and GPSd have been found to play nicely with each other, but how can usage be made easier? <br>
 Perhaps if we wrapped some Python around everything to launch/terminate airodump instances, kind of <br>
@@ -63,4 +64,4 @@ network={
 -ghostop14 > Sparrow-WiFi <br>
 -yanewby > https://forums.raspberrypi.com/viewtopic.php?t=23440 <br>
 <h6>Required Disclosure as per GNU GPL v3:</h6>
-kinglet.py is directly derived from sparrowwifiagent.py <br>
+$REPO/sparrow-wifi/kinglet.py is directly derived from sparrowwifiagent.py <br>
