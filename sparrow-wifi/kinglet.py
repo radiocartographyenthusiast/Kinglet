@@ -31,6 +31,7 @@ import re
 
 import argparse
 import configparser
+# import subprocess
 
 from socket import *
 from time import sleep
@@ -293,7 +294,7 @@ class AutoAgentScanThread(Thread):
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='Kinglet Sparrow-wifi agent')
     argparser.add_argument('--staticcoord', help="Use user-defined lat,long,altitude(m) rather than GPS.  Ex: 40.1,-75.3,150", default='', required=False)
-    argparser.add_argument('--recordinterface', help="Automatically start recording locally with the given wireless interface (headless mode) in a recordings directory", default='', required=False)
+    argparser.add_argument('--interface', help="Automatically start recording locally with the given wireless interface (headless mode) in a recordings directory", default='', required=False)
     argparser.add_argument('--delaystart', help="Wait <delaystart> seconds before initializing", default=0, required=False)
     args = argparser.parse_args()
 
@@ -342,10 +343,19 @@ if __name__ == '__main__':
             print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] Local gpsd Found.  Providing GPS coordinates when synchronized.")
     else:
         print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] No local gpsd running.  No GPS data will be provided.")
-    if len(args.recordinterface) > 0:
-        runningcfg.recordInterface = args.recordinterface
+    if len(args.interface) > 0:
+        runningcfg.recordInterface = args.interface
     startRecord(runningcfg.recordInterface)
     
     # -------------- This is the shutdown process --------------
     #stopRecord()
+
+    #for curKey in lockList.keys():
+    #    curLock = lockList[curKey]
+    #    try:
+    #        curLock.release()
+    #    except:
+    #        pass
+
+    # os._exit(0)
     #exit(0)
