@@ -270,23 +270,22 @@ class AutoAgentScanThread(Thread):
         return clientVendor
     def exportNetworks(self):
         try:
-            self.outputFile = open(self.filename, 'a')
+            self.outputFile = open(self.filename, 'w')
         except:
             print('ERROR: Unable to write to wifi file ' + self.filename)
             return
-        self.outputFile.write('macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Last Seen,First Seen,GPS Valid,Latitude,Longitude,Altitude,Speed,Strongest GPS Valid,Strongest Latitude,Strongest Longitude,Strongest Altitude,Strongest Speed\n')
+        #self.outputFile.write('macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Last Seen,First Seen,GPS Valid,Latitude,Longitude,Altitude,Speed,Strongest GPS Valid,Strongest Latitude,Strongest Longitude,Strongest Altitude,Strongest Speed\n')
+        self.outputFile.write('[timestamp],macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Latitude,Longitude,Strongest Latitude,Strongest Longitude,\n')
         for netKey in self.discoveredNetworks.keys():
             curData = self.discoveredNetworks[netKey]
             vendor = self.ouiLookup(curData.macAddr)
 
             if vendor is None:
                 vendor = ''
-
-            self.outputFile.write(curData.macAddr  + ',' + vendor + ',"' + curData.ssid + '",' + curData.security + ',' + curData.privacy)
-            self.outputFile.write(',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' + str(curData.bandwidth) + ',' +
-                                    curData.lastSeen.strftime("%m/%d/%Y %H:%M:%S") + ',' + curData.firstSeen.strftime("%m/%d/%Y %H:%M:%S") + ',' +
-                                    str(curData.gps.isValid) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' + str(curData.gps.altitude) + ',' + str(curData.gps.speed) + ',' +
-                                    str(curData.strongestgps.isValid) + ',' + str(curData.strongestgps.latitude) + ',' + str(curData.strongestgps.longitude) + ',' + str(curData.strongestgps.altitude) + ',' + str(curData.strongestgps.speed) + '\n')
+            self.outputFile.write('['+ datetime.datetime.Now().strftime("%X") + '],' + curData.macAddr  + ',' + vendor + ',"' + curData.ssid + '",' + curData.security + ',' + curData.privacy + 
+            self.outputFile.write(',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' +
+                                    str(curData.bandwidth) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' +
+                                    str(curData.strongestgps.latitude) + ',' + str(curData.strongestgps.longitude) + ',' + '\n')
 
         self.outputFile.close()
 
@@ -294,7 +293,7 @@ class AutoAgentScanThread(Thread):
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='Kinglet Sparrow-wifi agent')
     argparser.add_argument('--staticcoord', help="Use user-defined lat,long,altitude(m) rather than GPS.  Ex: 40.1,-75.3,150", default='', required=False)
-    argparser.add_argument('--interface', help="Automatically start recording locally with the given wireless interface (headless mode) in a recordings directory", default='', required=False)
+    argparser.add_argument('--recordinterface', help="Automatically start recording locally with the given wireless interface (headless mode) in a recordings directory", default='', required=False)
     argparser.add_argument('--delaystart', help="Wait <delaystart> seconds before initializing", default=0, required=False)
     args = argparser.parse_args()
 
@@ -343,8 +342,8 @@ if __name__ == '__main__':
             print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] Local gpsd Found.  Providing GPS coordinates when synchronized.")
     else:
         print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] No local gpsd running.  No GPS data will be provided.")
-    if len(args.interface) > 0:
-        runningcfg.recordInterface = args.interface
+    if len(args.recordinterface) > 0:
+        runningcfg.recordInterface = args.recordinterface
     startRecord(runningcfg.recordInterface)
     
     # -------------- This is the shutdown process --------------
