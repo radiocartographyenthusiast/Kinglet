@@ -36,11 +36,13 @@ class MySettings:
     global HomeLon
     global useAirodump
     global WaitForLockBool
+    global iface
     def __init__(self):
         self.WaitForLockBool = True
         self.useAirodump = False
         self.SavedDataFilename = "settings.deez"
         self.PowerOn = True
+        self.iface = "wlan0"
         if os.path.exists(self.SavedDataFilename):                                                  #loading
             savedsettings = configparser.ConfigParser(self.SavedDataFilename)            #loading         
             try:
@@ -63,6 +65,17 @@ class MySettings:
             except:
                 print("ERROR: Unable to read config file: ", self.SavedDataFilename)
 
+"""            hlat = float(loaded.readline())                                                    #loading
+            hlon = float(loaded.readline())                                                    #loading
+            self.HomeWifiName = loaded.readline()                                                   #loading
+            self.HomeWifiKey = loaded.readline()                                                    #loading
+            self.TriggerDistance = int(loaded.readline())
+            #mylogger("Loaded data: " + loaded)                                                #loading
+            mylogger("Loaded latitude: " + str(hlat) + ", " + "loaded longitude: " + str(hlon))#loading
+            loaded.close()                                                                     #loading
+            self.HomeLat = hlat
+            self.HomeLon = hlon"""
+
 class GPSButton:
     global gstatus
     global gcolor
@@ -80,12 +93,12 @@ class GPSButton:
             self.gcolor = "Crimson"
 
 #defined functions
-def startmoniface():
-    os.system("sudo ./monstart.sh")
-    mylogger("mon0 up")
-def stopmoniface():
-    os.system("sudo ./monstop.sh")
-    mylogger("mon0 down")    
+def startmoniface(inFace):
+    os.system("sudo airmon-ng start "+ inFace)
+    mylogger(inFace+"mon up")
+def stopmoniface(inFace):
+    os.system("sudo airmon-ng stop " + inFace)
+    mylogger(inFace+"mon down")    
 def mylogger(logd):
     xd = datetime.datetime.now()
     logfilename = "rce.log"
@@ -124,6 +137,7 @@ def initstartup(mySettings):
                 time.sleep(14)
             time.sleep(1)
         except:
+            #mylogger("Exception Handling: GPS probably isn't active")
             #GPSd-py3 will tell us, no need
             time.sleep(5)
 
@@ -143,12 +157,14 @@ def initstartup(mySettings):
             packet = gpsd.get_current()
             CurrentLocation = location.Point(packet.lat, packet.lon)
             if packet.mode >= 2:
+                #mylogger("GPS locked")
                 #Check against geofence, then enable or disable monitor mode
                 try:
                     if mySettings.HomeLat == None:
                         mylogger("HomeLat is None")
                         if SetHome:                                                            #saving
                             HomeLocation = CurrentLocation                                     #saving
+                            #mylogger("savecfg unimplemented[1]")                              #saving
                             myCFG = configparser.ConfigParser()
                             myCFG['airotool'] = { 'hLat': mySettings.HomeLat,
                                                   'hLon': mySettings.HomeLon,
@@ -160,6 +176,16 @@ def initstartup(mySettings):
                                     myCFG.write(configfile)
                             except:
                                 mylogger("error generating config")
+                            """mylogger(str(packet.lat) + ", " + str(packet.lon))                 #saving
+                            #mylogger(HomeLocation)                                            #saving
+                            #MySettings.PowerOn = False                                                   #saving
+                            saving = open(mySettings.SavedDataFilename, 'w')                              #saving
+                            saving.write(str(packet.lat) + "\r\n")                             #saving
+                            saving.write(str(packet.lon) + "\r\n")                             #saving
+                            saving.write("dummy_ssid")                                         #saving
+                            saving.write("dummy_key")                                         #saving
+                            saving.write("7")                                         #saving
+                            saving.close()                                                     #saving"""
                             mylogger(mySettings.SavedDataFilename + " created or updated")                #saving
                             SetHome = False                                                    #saving
                     else:
@@ -171,10 +197,11 @@ def initstartup(mySettings):
                                 #we aren't monitoring, we must be leaving
                                 startmoniface()
                                 MonitorEnabled = True
+                                apcmd = None
                                 if mySettings.useAirodump:
                                     try:
                                         #start airodump process
-                                        apcmd = "sudo airodump-ng --gpsd -w rce --manufacturer --wps --output-format kismet wlan0mon"
+                                        apcmd = "sudo airodump-ng --gpsd -w rce --manufacturer --wps --output-format kismet " + mySettings.iface + "mon"
                                         apcmd = apcmd.split(' ')
                                         airoproc = subprocess.Popen(apcmd)
                                         mylogger('airodump-ng launched')
@@ -183,7 +210,7 @@ def initstartup(mySettings):
                                 else:
                                     try:
                                         #start Kinglet process
-                                        apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py"
+                                        apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon"
                                         apcmd = apcmd.split(' ')
                                         airoproc = subprocess.Popen(apcmd)
                                         mylogger('Kinglet launched')
@@ -293,13 +320,16 @@ def settingspage():
 
 #main
 if __name__ == '__main__':
+    mySettings = MySettings()
     argparser = argparse.ArgumentParser(description='')
-    argparser.add_argument('--airodump', help="Use airodump-ng instead of Sparrow-WiFi (Ex: python3 rce.py --airodump true", default='', required=False)
+    argparser.add_argument('--airodump', help="Use airodump-ng instead of Sparrow-WiFi (Ex: python3 rce.py --airodump true)", default='', required=False)
+    argparser.add_argument('--iface', help="Monitor mode interface to use (Ex: python3 rce.py --iface mon1)", default='', required=False)
     args = argparser.parse_args()
     #initstartup()
-    mySettings = MySettings()
     if args.airodump == 'true':
         mySettings.useAirodump = True
+    if len(args.iface) > 0:
+        mySettings.iface = args.iface
     mgrthread = threading.Thread(name="manager", target=initstartup, args=[mySettings])
     mgrthread.start()
     flaskthread = threading.Thread(name="flask", target=initflask, args=[mySettings], daemon=True)
