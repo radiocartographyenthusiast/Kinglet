@@ -65,17 +65,6 @@ class MySettings:
             except:
                 print("ERROR: Unable to read config file: ", self.SavedDataFilename)
 
-"""            hlat = float(loaded.readline())                                                    #loading
-            hlon = float(loaded.readline())                                                    #loading
-            self.HomeWifiName = loaded.readline()                                                   #loading
-            self.HomeWifiKey = loaded.readline()                                                    #loading
-            self.TriggerDistance = int(loaded.readline())
-            #mylogger("Loaded data: " + loaded)                                                #loading
-            mylogger("Loaded latitude: " + str(hlat) + ", " + "loaded longitude: " + str(hlon))#loading
-            loaded.close()                                                                     #loading
-            self.HomeLat = hlat
-            self.HomeLon = hlon"""
-
 class GPSButton:
     global gstatus
     global gcolor
@@ -176,21 +165,12 @@ def initstartup(mySettings):
                                     myCFG.write(configfile)
                             except:
                                 mylogger("error generating config")
-                            """mylogger(str(packet.lat) + ", " + str(packet.lon))                 #saving
-                            #mylogger(HomeLocation)                                            #saving
-                            #MySettings.PowerOn = False                                                   #saving
-                            saving = open(mySettings.SavedDataFilename, 'w')                              #saving
-                            saving.write(str(packet.lat) + "\r\n")                             #saving
-                            saving.write(str(packet.lon) + "\r\n")                             #saving
-                            saving.write("dummy_ssid")                                         #saving
-                            saving.write("dummy_key")                                         #saving
-                            saving.write("7")                                         #saving
-                            saving.close()                                                     #saving"""
+
                             mylogger(mySettings.SavedDataFilename + " created or updated")                #saving
                             SetHome = False                                                    #saving
                     else:
                         curdistance = distance.distance(CurrentLocation, location.Point(mySettings.HomeLat, mySettings.HomeLon)).feet
-                        if curdistance > mySettings.TriggerDistance:                                                                                                                         #DISTANCE IN FEET TO ACTIVATE AIRODUMP
+                        if curdistance > mySettings.TriggerDistance:                                             #DISTANCE IN FEET TO ACTIVATE AIRODUMP
                             #mylogger("Away from HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
                             #we are away from the home
                             if MonitorEnabled == False:
@@ -199,23 +179,15 @@ def initstartup(mySettings):
                                 MonitorEnabled = True
                                 apcmd = None
                                 if mySettings.useAirodump:
-                                    try:
-                                        #start airodump process
-                                        apcmd = "sudo airodump-ng --gpsd -w rce --manufacturer --wps --output-format kismet " + mySettings.iface + "mon"
-                                        apcmd = apcmd.split(' ')
-                                        airoproc = subprocess.Popen(apcmd)
-                                        mylogger('airodump-ng launched')
-                                    except:
-                                        mylogger('Error launching airodump-ng')
+                                    apcmd = "sudo airodump-ng --gpsd -w rce --manufacturer --wps --output-format kismet " + mySettings.iface + "mon"
                                 else:
-                                    try:
-                                        #start Kinglet process
-                                        apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon"
-                                        apcmd = apcmd.split(' ')
-                                        airoproc = subprocess.Popen(apcmd)
-                                        mylogger('Kinglet launched')
-                                    except:
-                                        mylogger('Error launching Kinglet')
+                                    apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon"
+                                apcmd = apcmd.split(' ')
+                                try:
+                                    airoproc = subprocess.Popen(apcmd)
+                                    mylogger('airodump-ng launched')
+                                except:
+                                    mylogger('Error launching monitor app')
                             time.sleep(59)
                         else:
                             #mylogger("Near HomeLocation; " + str(packet.lat) + ", " + str(packet.lon) + "; Distance: " + str(curdistance) + "ft")
@@ -322,8 +294,8 @@ def settingspage():
 if __name__ == '__main__':
     mySettings = MySettings()
     argparser = argparse.ArgumentParser(description='')
-    argparser.add_argument('--airodump', help="Use airodump-ng instead of Sparrow-WiFi (Ex: python3 rce.py --airodump true)", default='', required=False)
-    argparser.add_argument('--iface', help="Monitor mode interface to use (Ex: python3 rce.py --iface mon1)", default='', required=False)
+    argparser.add_argument('--airodump', help="Use airodump-ng instead of Sparrow-WiFi (Ex: python3 Kinglet.py --airodump true)", default='', required=False)
+    argparser.add_argument('--iface', help="Monitor mode interface to use (Ex: python3 Kinglet.py --iface mon1)", default='', required=False)
     args = argparser.parse_args()
     #initstartup()
     if args.airodump == 'true':
