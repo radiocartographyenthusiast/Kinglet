@@ -53,10 +53,12 @@ class AConfigSettings():
     global recordInterface
     global recordRunning
     global cancelStart
+    global dumpLoc
     def __init__(self):
         self.cancelStart = False
         self.recordInterface="wlan0mon"
         self.recordRunning = False
+        self.dumpLoc = ""
 
 
 try:
@@ -69,6 +71,7 @@ except:
 gpsEngine = None
 curTime = datetime.datetime.now()
 lockList = {}
+noFalcon = False
 
 # ------   Global functions ------------
 def stringtobool(instr):
@@ -82,7 +85,7 @@ def TwoDigits(instr):
         instr = '0' + instr
 
     return instr
-def startRecord(interface):
+def startRecord(interface, dumpLoc):
     global recordThread
 
     if recordThread:
@@ -92,7 +95,7 @@ def startRecord(interface):
         interfaces = WirelessEngine.getInterfaces()
 
         if interface in interfaces:
-            recordThread = AutoAgentScanThread(interface)
+            recordThread = AutoAgentScanThread(interface, dumpLoc)
             recordThread.start()
         else:
             print('ERROR: Record was requested on ' + interface + ' but that interface was not found.')
@@ -171,7 +174,7 @@ class FileSystemFile(object):
             self.timestamp = parser.parse(jsondict['timestamp'])
 # ------------------  Agent auto scan thread  ------------------------------
 class AutoAgentScanThread(Thread):
-    def __init__(self, interface):
+    def __init__(self, interface, dumpLoc):
         global lockList
 
         super(AutoAgentScanThread, self).__init__()
@@ -195,7 +198,7 @@ class AutoAgentScanThread(Thread):
         if interface not in lockList.keys():
             lockList[interface] = Lock()
 
-        saveloc = os.getcwd() + '/kinglet'
+        saveloc = dumpLoc
         if  not os.path.exists(saveloc):
             os.makedirs(saveloc)
 
@@ -270,12 +273,12 @@ class AutoAgentScanThread(Thread):
         return clientVendor
     def exportNetworks(self):
         try:
-            self.outputFile = open(self.filename, 'w')
+            self.outputFile = open(self.filename, 'a')
         except:
             print('ERROR: Unable to write to wifi file ' + self.filename)
             return
         #self.outputFile.write('macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Last Seen,First Seen,GPS Valid,Latitude,Longitude,Altitude,Speed,Strongest GPS Valid,Strongest Latitude,Strongest Longitude,Strongest Altitude,Strongest Speed\n')
-        self.outputFile.write('[timestamp],macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Latitude,Longitude,Strongest Latitude,Strongest Longitude,\n')
+        #self.outputFile.write('[timestamp],macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Latitude,Longitude,\n')
         for netKey in self.discoveredNetworks.keys():
             curData = self.discoveredNetworks[netKey]
             vendor = self.ouiLookup(curData.macAddr)
@@ -283,9 +286,7 @@ class AutoAgentScanThread(Thread):
             if vendor is None:
                 vendor = ''
             self.outputFile.write('['+ datetime.datetime.Now().strftime("%X") + '],' + curData.macAddr  + ',' + vendor + ',"' + curData.ssid + '",' + curData.security + ',' + curData.privacy + 
-            self.outputFile.write(',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' +
-                                    str(curData.bandwidth) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' +
-                                    str(curData.strongestgps.latitude) + ',' + str(curData.strongestgps.longitude) + ',' + '\n')
+            self.outputFile.write(',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' + str(curData.bandwidth) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' + '\n')
 
         self.outputFile.close()
 
@@ -295,8 +296,12 @@ if __name__ == '__main__':
     argparser.add_argument('--staticcoord', help="Use user-defined lat,long,altitude(m) rather than GPS.  Ex: 40.1,-75.3,150", default='', required=False)
     argparser.add_argument('--recordinterface', help="Automatically start recording locally with the given wireless interface (headless mode) in a recordings directory", default='', required=False)
     argparser.add_argument('--delaystart', help="Wait <delaystart> seconds before initializing", default=0, required=False)
+    argparser.add_argument('--nofalcon', help="Don't load Falcon plugin (Ex: python3 Kinglet.py --nofalcon true)", default='', required=False)
+    argparser.add_argument('--write', help="Folder to dump logs into (Ex: python3 Kinglet.py --write /home/rad)", default='', required=True)
     args = argparser.parse_args()
 
+    if len(args.nofalcon) > 0:
+        noFalcon = True
     if len(args.staticcoord) > 0:
         coord_array = args.staticcoord.split(",")
         if len(coord_array) < 3:
@@ -324,15 +329,17 @@ if __name__ == '__main__':
         if pluginsdir not in sys.path:
             sys.path.insert(0,pluginsdir)
         if  os.path.isfile(pluginsdir + '/falconwifi.py'):
-            from falconwifi import FalconWiFiRemoteAgent, WPAPSKCrack, WEPCrack
-            hasFalcon = True
-            falconWiFiRemoteAgent = FalconWiFiRemoteAgent()
-            if not falconWiFiRemoteAgent.toolsInstalled():
-                print("ERROR: aircrack suite of tools does not appear to be installed.  Please install it.")
-                exit(4)
+            if not noFalcon:
+                from falconwifi import FalconWiFiRemoteAgent, WPAPSKCrack, WEPCrack
+                hasFalcon = True
+                falconWiFiRemoteAgent = FalconWiFiRemoteAgent()
+                if not falconWiFiRemoteAgent.toolsInstalled():
+                    print("ERROR: aircrack suite of tools does not appear to be installed.  Please install it.")
+                    exit(4)
 
     runningcfg = AConfigSettings()
     # Now start logic
+    runningcfg.dumpLoc = args.write
     # Check the local GPS.
     if GPSEngine.GPSDRunning():
         gpsEngine.start()
@@ -344,7 +351,7 @@ if __name__ == '__main__':
         print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] No local gpsd running.  No GPS data will be provided.")
     if len(args.recordinterface) > 0:
         runningcfg.recordInterface = args.recordinterface
-    startRecord(runningcfg.recordInterface)
+    startRecord(runningcfg.recordInterface, runningcfg.dumpLoc)
     
     # -------------- This is the shutdown process --------------
     #stopRecord()
