@@ -24,8 +24,13 @@ from flask import Flask
 from os import environ
 import configparser
 import argparse
+import waitress
 
 #global var block
+global mgrthread
+global flaskthread
+global airoproc
+
 class MySettings:
     global PowerOn
     global SavedDataFilename
@@ -84,7 +89,39 @@ class GPSButton:
         except:
             self.gstatus = "None"
             self.gcolor = "Crimson"
-
+            
+class MyStatuses:
+    global mgrthreadstatus
+    global gpsdstatus
+    global kstatus
+    global flaskthreadstatus
+    
+    def __init__(self):
+        if mgrthread.is_alive():
+            self.mgrthreadstatus = "✔"
+        else:
+            self.mgrthreadstatus = "❌"
+        if flaskthread.is_alive():
+            self.flaskthreadstatus = "✔"
+        else:
+            flaskthreadstatus = "❌"
+        if airoproc:
+            if airoproc.poll() == None:
+                self.kstatus = "✔"
+        else:
+            self.kstatus = "❌"
+        try:
+            p = subprocess.Popen(["pidof", "gpsd"], stdout=subprocess.PIPE)
+            out, err = p.communicate()
+            out2 = str(out).replace('\n', '')
+            print(out2)
+            print(str(len(out2)))
+            if len(out2) > 3:
+                self.gpsdstatus = "✔"
+            else:
+                self.gpsdstatus = "❌"
+        except:
+            self.gpsdstatus = "❌"
 #defined functions
 def startmoniface(inFace):
     os.system("sudo airmon-ng start "+ inFace)
@@ -244,7 +281,7 @@ def initflask(mySettings):
         PORT = 80
     mylogger("Proceeding to launch web ui")
     try:
-        app.run(HOST, PORT)
+        waitress.serve(app, host=HOST, port=PORT)
     except:
         print("Error launching web ui; airotool will continue headlessly; try running the script with sudo")
         mylogger("Error launching web ui; airotool will continue headlessly; try running the script with sudo")
@@ -271,6 +308,7 @@ def home():
 def gps_status():
     """Renders the about page."""
     myGPSButton = GPSButton()
+    myStatuses = MyStatuses()
     try:
         packet = gpsd.get_current()
         CurrentLocation = location.Point(packet.lat, packet.lon)
@@ -286,7 +324,11 @@ def gps_status():
             GPS_mode = str(packet.mode),
             HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
             CurDist=howfar,
-            CurLoc=CurrentLocation)
+            CurLoc=CurrentLocation,
+            mgrstat=myStatuses.mgrthreadstatus,
+            flaskstat=myStatuses.flaskthreadstatus,
+            kingletstat=myStatuses.kstatus,
+            gpsdstat=myStatuses.gpsdstatus)
     except:
         return render_template(
             'gps-status.html',
@@ -297,103 +339,157 @@ def gps_status():
             GPS_lat = str(0.0),
             GPS_lon = str(0.0),
             GPS_mode = str(0),
-            HomeLoc="null?",
+            HomeLoc="Uninitialized",
             CurDist="unknown",
-            CurLoc="Exceptional")
+            CurLoc="Exceptional",
+            mgrstat=myStatuses.mgrthreadstatus,
+            flaskstat=myStatuses.flaskthreadstatus,
+            kingletstat=myStatuses.kstatus,
+            gpsdstat=myStatuses.gpsdstatus)
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settingspage():
-    myGPSButton = GPSButton()
-    fcnt = getklogcnt()
-    ccnt = getcsvcnt()
-    retmsg = None
-    if request.method == 'POST':
-        if request.form.get("inputDumpFolder"):
-            newDumpLoc = request.form.get("inputDumpFolder")
-        if request.form.get("inputHomeLat"):
-            mySettings.HomeLat = request.form.get("inputHomeLat")
-        if request.form.get("inputHomeLon"):
-            mySettings.HomeLon = request.form.get("inputHomeLon")
-        if request.form.get("inputHomeSid"):
-            mySettings.HomeWifiName = request.form.get("inputHomeSid")
-        if request.form.get("inputHomeKey"):
-            mySettings.HomeWifiKey = request.form.get("inputHomeKey")
-        if request.form.get("inputTrigDist"):
-            mySettings.TriggerDistance = request.form.get("inputTrigDist")
-        #save settings
-        if mySettings:
-            newHomeLocation = location.Point(mySettings.HomeLat, mySettings.HomeLon)
-            myCFG = configparser.ConfigParser()
-            myCFG['airotool'] = { 'hLat': mySettings.HomeLat,
-                                  'hLon': mySettings.HomeLon,
-                                  'homeWifiName': mySettings.HomeWifiName,
-                                  'homeWifiKey': mySettings.HomeWifiKey,
-                                  'triggerDistance': mySettings.TriggerDistance }
-            try:
-                with open(mySettings.SavedDataFilename, 'w') as configfile:
-                    myCFG.write(configfile)
-                retmsg = "Settings updated successfully"
-                mylogger(retmsg)
-            except:
-                retmsg = "Error updating settings"
-                mylogger(retmsg)
-        #render whole page since I don't know how to do simpler; I guess modals are what I'm really wanting?
-        return render_template(
-            'settings.html',
-            title='Settings',
-            year=datetime.datetime.now().year,
-            GPSd_Status=myGPSButton.gstatus,
-            GPSd_Color=myGPSButton.gcolor,
-            dumpfolder=dumpFolder,
-            klogcnt=fcnt,
-            csvcnt=ccnt,
-            totcnt=fcnt+ccnt,
-            HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
-            HomeSSID=mySettings.HomeWifiName,
-            HomeKey=mySettings.HomeWifiKey,
-            HomeLati=mySettings.HomeLat,
-            HomeLong=mySettings.HomeLon,
-            triggerDistance=mySettings.TriggerDistance,
-            message=retmsg)
-    elif request.method == "GET":
-        try:
-            retloc = location.Point(mySettings.HomeLat, mySettings.HomeLon)
+    try:
+        myGPSButton = GPSButton()
+        fcnt = getklogcnt()
+        ccnt = getcsvcnt()
+        retmsg = None
+        if request.method == 'POST':
+            if request.form.get("inputDumpFolder"):
+                newDumpLoc = request.form.get("inputDumpFolder")
+            if request.form.get("inputHomeLat"):
+                mySettings.HomeLat = request.form.get("inputHomeLat")
+            if request.form.get("inputHomeLon"):
+                mySettings.HomeLon = request.form.get("inputHomeLon")
+            if request.form.get("inputHomeSid"):
+                mySettings.HomeWifiName = request.form.get("inputHomeSid")
+            if request.form.get("inputHomeKey"):
+                mySettings.HomeWifiKey = request.form.get("inputHomeKey")
+            if request.form.get("inputTrigDist"):
+                mySettings.TriggerDistance = request.form.get("inputTrigDist")
+            #save settings
+            if mySettings:
+                newHomeLocation = location.Point(mySettings.HomeLat, mySettings.HomeLon)
+                myCFG = configparser.ConfigParser()
+                myCFG['airotool'] = { 'hLat': mySettings.HomeLat,
+                                      'hLon': mySettings.HomeLon,
+                                      'homeWifiName': mySettings.HomeWifiName,
+                                      'homeWifiKey': mySettings.HomeWifiKey,
+                                      'triggerDistance': mySettings.TriggerDistance }
+                try:
+                    with open(mySettings.SavedDataFilename, 'w') as configfile:
+                        myCFG.write(configfile)
+                    retmsg = "Settings updated successfully"
+                    mylogger(retmsg)
+                except:
+                    retmsg = "Error updating settings"
+                    mylogger(retmsg)
+            #render whole page since I don't know how to do simpler; I guess modals are what I'm really wanting?
             return render_template(
                 'settings.html',
                 title='Settings',
                 year=datetime.datetime.now().year,
                 GPSd_Status=myGPSButton.gstatus,
                 GPSd_Color=myGPSButton.gcolor,
-                dumpfolder=mySettings.dumpFolder,
+                dumpfolder=dumpFolder,
                 klogcnt=fcnt,
                 csvcnt=ccnt,
                 totcnt=fcnt+ccnt,
-                HomeLoc=retloc,
+                HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
                 HomeSSID=mySettings.HomeWifiName,
                 HomeKey=mySettings.HomeWifiKey,
                 HomeLati=mySettings.HomeLat,
                 HomeLong=mySettings.HomeLon,
-                triggerDistance=mySettings.TriggerDistance)
-        except:
-            return render_template(
-                'settings.html',
-                title='Settings - Uninitialized',
-                year=datetime.datetime.now().year,
-                GPSd_Status=myGPSButton.gstatus,
-                GPSd_Color=myGPSButton.gcolor,
-                dumpfolder=mySettings.dumpFolder,
-                klogcnt=fcnt,
-                csvcnt=ccnt,
-                totcnt=fcnt+ccnt,
-                HomeLoc="Uninitialized",
-                HomeSSID="Uninitialized",
-                HomeKey="Uninitialized",
-                HomeLati="Uninitialized",
-                HomeLong="Uninitialized",
-                triggerDistance="Uninitialized")
-
+                triggerDistance=mySettings.TriggerDistance,
+                message=retmsg)
+        elif request.method == "GET":
+            try:
+                if len(mySettings.HomeLat) > 0:
+                    retloc = location.Point(mySettings.HomeLat, mySettings.HomeLon)
+                    retla = mySettings.HomeLat
+                    retlo = mySettings.HomeLon
+                    retwfn = mySettings.HomeWifiName
+                    retwfk = mySettings.HomeWifiKey
+                    retd = mySettings.triggerDistance
+                    retdl = mySettings.dumpFolder
+                else:
+                    retloc = "Uninitialized"
+                    retla = "Uninitialized"
+                    retlo = "Uninitialized"
+                    retwfn = "Uninitialized"
+                    retwfk = "Uninitialized"
+                    retd = "Uninitialized"
+                    retdl = "Uninitialized"
+                return render_template(
+                    'settings.html',
+                    title='Settings',
+                    year=datetime.datetime.now().year,
+                    GPSd_Status=myGPSButton.gstatus,
+                    GPSd_Color=myGPSButton.gcolor,
+                    dumpfolder=retdl,
+                    klogcnt=fcnt,
+                    csvcnt=ccnt,
+                    totcnt=fcnt+ccnt,
+                    HomeLoc=retloc,
+                    HomeSSID=retwfn,
+                    HomeKey=retwfk,
+                    HomeLati=retla,
+                    HomeLong=retlo,
+                    triggerDistance=retd)
+            except Exception as e:
+                mylogger("[Exception]" + str(e.__class__))
+                retloc = "Uninitialized"
+                retla = "Uninitialized"
+                retlo = "Uninitialized"
+                retwfn = "Uninitialized"
+                retwfk = "Uninitialized"
+                retd = "Uninitialized"
+                retdl = "Uninitialized"
+                return render_template(
+                    'settings.html',
+                    title='Settings',
+                    year=datetime.datetime.now().year,
+                    GPSd_Status=myGPSButton.gstatus,
+                    GPSd_Color=myGPSButton.gcolor,
+                    dumpfolder=retdl,
+                    klogcnt=fcnt,
+                    csvcnt=ccnt,
+                    totcnt=fcnt+ccnt,
+                    HomeLoc=retloc,
+                    HomeSSID=retwfn,
+                    HomeKey=retwfk,
+                    HomeLati=retla,
+                    HomeLong=retlo,
+                    triggerDistance=retd)
+    except Exception as e:
+        mylogger("[Exception]" + str(e.__class__))
+        #it's throwing an exception somewhere around this scope when run on startup and trying to access the settings page, so we're doing this jank
+        retloc = "Uninitialized"
+        retla = "Uninitialized"
+        retlo = "Uninitialized"
+        retwfn = "Uninitialized"
+        retwfk = "Uninitialized"
+        retd = "Uninitialized"
+        retdl = "Uninitialized"
+        return render_template(
+            'settings.html',
+            title='Settings',
+            year=datetime.datetime.now().year,
+            GPSd_Status=myGPSButton.gstatus,
+            GPSd_Color=myGPSButton.gcolor,
+            dumpfolder=retdl,
+            klogcnt=fcnt,
+            csvcnt=ccnt,
+            totcnt=fcnt+ccnt,
+            HomeLoc=retloc,
+            HomeSSID=retwfn,
+            HomeKey=retwfk,
+            HomeLati=retla,
+            HomeLong=retlo,
+            triggerDistance=retd)
 #main
 if __name__ == '__main__':
+    airoproc = None
     mySettings = MySettings()
     argparser = argparse.ArgumentParser(description='')
     argparser.add_argument('--airodump', help="Use airodump-ng instead of Sparrow-WiFi (Ex: python3 Kinglet.py --airodump true)", default='', required=False)
@@ -411,6 +507,7 @@ if __name__ == '__main__':
     mgrthread.start()
     flaskthread = threading.Thread(name="flask", target=initflask, args=[mySettings], daemon=True)
     flaskthread.start()
+#    initflask(mySettings)
 #    print(str(PowerOn))
 #    while(PowerOn):
 #        inp = input()
