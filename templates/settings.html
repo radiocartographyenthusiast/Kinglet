@@ -2,13 +2,51 @@
 
 {% block content %}
 
+{% if message  %}
+    <div class="alert alert-secondary" role="alert">
+        <p>{{ message }}</p>
+    </div>
+{% endif %}
+
 <h4>{{ title }}</h4>
-.kistmet file count: {{ klogcnt }}<br>
-Home location: {{ HomeLoc }} <br>
-Home lat/lon: {{ HomeLati }}, {{ HomeLong }} <br>
-Home WiFi SSID: {{ HomeSSID }} <br>
-[home wifi key?] <br>
-[Update button] <br>
-Distance from Home Point to start airodump-ng: {{ triggerDistance }} ft <br>
+<table align="center">
+	<tr>
+		<td align="right">Airodump-ng Dump File (.kismet) Count: {{ klogcnt }}</td>
+	</tr>
+	<tr>
+		<td align="right">Kinglet Dump File Count: {{ csvcnt }}</td>
+	</tr>
+	<tr>
+		<td align="right">Total Undigested File Count: {{ totcnt }}</td>
+	</tr>
+	<tr>
+		<td align="right">Home Location: {{ HomeLoc }}</td>
+	</tr>
+</table>
+
+<form action="" method="post" align="center">
+	<div class="form-group" align="center">
+        <label for="DumpFolder">Dump Folder: </label>
+        <input name="dumpFolder" class="form-control" style="text-align:center" id="inputDumpFolder" placeholder="{{ dumpfolder }}">
+	</div>
+	<div class="form-group" align="center">
+        <label for="HomeLatLon">Home Latitude and Longitude: </label>
+        <input name="homeLat" class="form-control" style="text-align:center" id="inputHomeLat" placeholder="{{ HomeLati }}">
+		<input name="homeLon" class="form-control" style="text-align:center" id="inputHomeLon" placeholder="{{ HomeLong }}">
+	</div>
+	<div class="form-group" align="center">
+        <label for="homesid">Home WiFi SSID: </label>
+        <input name="homeSid" class="form-control" style="text-align:center" id="inputHomeSid" placeholder="{{ HomeSSID }}">
+	</div>
+	<div class="form-group" align="center">
+        <label for="homekey">Home WiFi Key: </label>
+        <input name="homeKey" class="form-control" style="text-align:center" id="inputHomeKey" placeholder="{{ HomeKey }}">
+	</div>
+	<div class="form-group" align="center">
+        <label for="TrigDist">Home WiFi SSID: </label>
+        <input name="homeTrigDist" class="form-control" style="text-align:center" id="inputTrigDist" placeholder="{{ triggerDistance }}">
+	</div>
+	<button type="submit" style="text-align:center" class="btn btn-primary">Update Settings</button>
+</form>
 
 {% endblock %}
