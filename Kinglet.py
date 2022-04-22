@@ -37,12 +37,16 @@ class MySettings:
     global useAirodump
     global WaitForLockBool
     global iface
+    global noFalcon
+    global dumpFolder
     def __init__(self):
         self.WaitForLockBool = True
         self.useAirodump = False
+        self.noFalcon = False
         self.SavedDataFilename = "settings.deez"
         self.PowerOn = True
         self.iface = "wlan0"
+        self.dumpFolder = os.getcwd() + "/logs"
         if os.path.exists(self.SavedDataFilename):                                                  #loading
             savedsettings = configparser.ConfigParser(self.SavedDataFilename)            #loading         
             try:
@@ -96,13 +100,21 @@ def mylogger(logd):
     logfile.close()
 def getklogcnt():
     iklogcnt = 0
-    wdir = os.getcwd()
+    wdir = mySettings.dumpFolder
     for path in os.listdir(wdir):
         if os.path.isfile(os.path.join(wdir, path)):
             if"kismet" in path:
                 iklogcnt += 1
     return iklogcnt
-
+def getcsvcnt():
+    icsvcnt = 0
+    wdir = mySettings.dumpFolder
+    for path in os.listdir(wdir):
+        if os.path.isfile(os.path.join(wdir, path)):
+            if ".csv" in path:
+                icsvcnt += 1
+    return icsvcnt
+    
 #management thread with nested loop
 def initstartup(mySettings):
     mylogger("Manager Thread Loop spooled up")
@@ -179,13 +191,16 @@ def initstartup(mySettings):
                                 MonitorEnabled = True
                                 apcmd = None
                                 if mySettings.useAirodump:
-                                    apcmd = "sudo airodump-ng --gpsd -w rce --manufacturer --wps --output-format kismet " + mySettings.iface + "mon"
+                                    apcmd = "sudo airodump-ng --gpsd -w " + mySettings.dumpFolder + " --manufacturer --wps --output-format kismet " + mySettings.iface + "mon"
                                 else:
-                                    apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon"
+                                    apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --write " + mySettings.dumpFolder + " --nofalcon true"
                                 apcmd = apcmd.split(' ')
                                 try:
                                     airoproc = subprocess.Popen(apcmd)
-                                    mylogger('airodump-ng launched')
+                                    if mySettings.useAirodump:
+                                        mylogger('airodump-ng launched')
+                                    else:
+                                        mylogger('kinglet.py launched')
                                 except:
                                     mylogger('Error launching monitor app')
                             time.sleep(59)
@@ -236,6 +251,7 @@ def initflask(mySettings):
 
 
 app = Flask(__name__)
+from flask import request
 
 @app.route('/')
 @app.route('/home')
@@ -255,40 +271,126 @@ def home():
 def gps_status():
     """Renders the about page."""
     myGPSButton = GPSButton()
-    packet = gpsd.get_current()
-    CurrentLocation = location.Point(packet.lat, packet.lon)
-    howfar = distance.distance(CurrentLocation, location.Point(mySettings.HomeLat, mySettings.HomeLon)).feet
-    return render_template(
-        'gps-status.html',
-        title='GPS Status',
-        year=datetime.datetime.now().year,
-        GPSd_Status=myGPSButton.gstatus,
-        GPSd_Color=myGPSButton.gcolor,
-        GPS_lat = str(packet.lat),
-        GPS_lon = str(packet.lon),
-        GPS_mode = str(packet.mode),
-        HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
-        CurDist=howfar,
-        CurLoc=CurrentLocation
-    )
+    try:
+        packet = gpsd.get_current()
+        CurrentLocation = location.Point(packet.lat, packet.lon)
+        howfar = distance.distance(CurrentLocation, location.Point(mySettings.HomeLat, mySettings.HomeLon)).feet
+        return render_template(
+            'gps-status.html',
+            title='Telemetry',
+            year=datetime.datetime.now().year,
+            GPSd_Status=myGPSButton.gstatus,
+            GPSd_Color=myGPSButton.gcolor,
+            GPS_lat = str(packet.lat),
+            GPS_lon = str(packet.lon),
+            GPS_mode = str(packet.mode),
+            HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
+            CurDist=howfar,
+            CurLoc=CurrentLocation)
+    except:
+        return render_template(
+            'gps-status.html',
+            title='Telemetry',
+            year=datetime.datetime.now().year,
+            GPSd_Status="None",
+            GPSd_Color="Crimson",
+            GPS_lat = str(0.0),
+            GPS_lon = str(0.0),
+            GPS_mode = str(0),
+            HomeLoc="null?",
+            CurDist="unknown",
+            CurLoc="Exceptional")
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 def settingspage():
     myGPSButton = GPSButton()
     fcnt = getklogcnt()
-    return render_template(
-        'settings.html',
-        title='Settings Page',
-        year=datetime.datetime.now().year,
-        GPSd_Status=myGPSButton.gstatus,
-        GPSd_Color=myGPSButton.gcolor,
-        klogcnt=fcnt,
-        HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
-        HomeSSID=mySettings.HomeWifiName,
-        HomeLati=mySettings.HomeLat,
-        HomeLong=mySettings.HomeLon,
-        triggerDistance=mySettings.TriggerDistance
-    )
+    ccnt = getcsvcnt()
+    retmsg = None
+    if request.method == 'POST':
+        if request.form.get("inputDumpFolder"):
+            newDumpLoc = request.form.get("inputDumpFolder")
+        if request.form.get("inputHomeLat"):
+            mySettings.HomeLat = request.form.get("inputHomeLat")
+        if request.form.get("inputHomeLon"):
+            mySettings.HomeLon = request.form.get("inputHomeLon")
+        if request.form.get("inputHomeSid"):
+            mySettings.HomeWifiName = request.form.get("inputHomeSid")
+        if request.form.get("inputHomeKey"):
+            mySettings.HomeWifiKey = request.form.get("inputHomeKey")
+        if request.form.get("inputTrigDist"):
+            mySettings.TriggerDistance = request.form.get("inputTrigDist")
+        #save settings
+        if mySettings:
+            newHomeLocation = location.Point(mySettings.HomeLat, mySettings.HomeLon)
+            myCFG = configparser.ConfigParser()
+            myCFG['airotool'] = { 'hLat': mySettings.HomeLat,
+                                  'hLon': mySettings.HomeLon,
+                                  'homeWifiName': mySettings.HomeWifiName,
+                                  'homeWifiKey': mySettings.HomeWifiKey,
+                                  'triggerDistance': mySettings.TriggerDistance }
+            try:
+                with open(mySettings.SavedDataFilename, 'w') as configfile:
+                    myCFG.write(configfile)
+                retmsg = "Settings updated successfully"
+                mylogger(retmsg)
+            except:
+                retmsg = "Error updating settings"
+                mylogger(retmsg)
+        #render whole page since I don't know how to do simpler; I guess modals are what I'm really wanting?
+        return render_template(
+            'settings.html',
+            title='Settings',
+            year=datetime.datetime.now().year,
+            GPSd_Status=myGPSButton.gstatus,
+            GPSd_Color=myGPSButton.gcolor,
+            dumpfolder=dumpFolder,
+            klogcnt=fcnt,
+            csvcnt=ccnt,
+            totcnt=fcnt+ccnt,
+            HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
+            HomeSSID=mySettings.HomeWifiName,
+            HomeKey=mySettings.HomeWifiKey,
+            HomeLati=mySettings.HomeLat,
+            HomeLong=mySettings.HomeLon,
+            triggerDistance=mySettings.TriggerDistance,
+            message=retmsg)
+    elif request.method == "GET":
+        try:
+            retloc = location.Point(mySettings.HomeLat, mySettings.HomeLon)
+            return render_template(
+                'settings.html',
+                title='Settings',
+                year=datetime.datetime.now().year,
+                GPSd_Status=myGPSButton.gstatus,
+                GPSd_Color=myGPSButton.gcolor,
+                dumpfolder=mySettings.dumpFolder,
+                klogcnt=fcnt,
+                csvcnt=ccnt,
+                totcnt=fcnt+ccnt,
+                HomeLoc=retloc,
+                HomeSSID=mySettings.HomeWifiName,
+                HomeKey=mySettings.HomeWifiKey,
+                HomeLati=mySettings.HomeLat,
+                HomeLong=mySettings.HomeLon,
+                triggerDistance=mySettings.TriggerDistance)
+        except:
+            return render_template(
+                'settings.html',
+                title='Settings - Uninitialized',
+                year=datetime.datetime.now().year,
+                GPSd_Status=myGPSButton.gstatus,
+                GPSd_Color=myGPSButton.gcolor,
+                dumpfolder=mySettings.dumpFolder,
+                klogcnt=fcnt,
+                csvcnt=ccnt,
+                totcnt=fcnt+ccnt,
+                HomeLoc="Uninitialized",
+                HomeSSID="Uninitialized",
+                HomeKey="Uninitialized",
+                HomeLati="Uninitialized",
+                HomeLong="Uninitialized",
+                triggerDistance="Uninitialized")
 
 #main
 if __name__ == '__main__':
@@ -296,8 +398,11 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='')
     argparser.add_argument('--airodump', help="Use airodump-ng instead of Sparrow-WiFi (Ex: python3 Kinglet.py --airodump true)", default='', required=False)
     argparser.add_argument('--iface', help="Monitor mode interface to use (Ex: python3 Kinglet.py --iface mon1)", default='', required=False)
+    argparser.add_argument('--nofalcon', help="Don't load Falcon plugin (Ex: python3 Kinglet.py --nofalcon true)", default='', required=False)
     args = argparser.parse_args()
     #initstartup()
+    if len(args.nofalcon) > 0:
+        mySettings.noFalcon = True
     if args.airodump == 'true':
         mySettings.useAirodump = True
     if len(args.iface) > 0:
