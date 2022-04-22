@@ -1,12 +1,37 @@
 {% extends "layout.html" %}
 
+<h4>{{ title }}</h4>
+
 {% block content %}
 
-<h4>{{ title }}</h4>
-Mode: {{ GPS_mode }} <br>
-Lat: {{ GPS_lat }}, Lon: {{ GPS_lon }}<br>
-Current location: {{ CurLoc }}<br>
-Home location: {{ HomeLoc }} <br>
-Distance from Home location: {{ CurDist }} ft <br>
+<table>
+	<tr>
+		<td align="left">Manager Thread: {{ mgrstat }}</td>
+	</tr>
+	<tr>
+		<td align="left">Flask Thread: {{ flaskstat }}</td>
+	</tr>
+	<tr>
+		<td align="left">Kinglet Capturing Status: {{ kingletstat }}</td>
+	</tr>
+	<tr>
+		<td align="left">GPSd Status: {{ gpsdstat }}</td>
+	</tr>
+	<tr>
+		<td align="left">Mode: {{ GPS_mode }} </td>
+	</tr>
+	<tr>
+		<td align="left">Lat: {{ GPS_lat }}, Lon: {{ GPS_lon }} </td>
+	</tr>
+	<tr>
+		<td align="left">Current location: {{ CurLoc }} </td>
+	</tr>
+	<tr>
+		<td align="left">Home location: {{ HomeLoc }} </td>
+	</tr>
+	<tr>
+		<td align="left">Distance from Home location: {{ CurDist }} ft </td>
+	</tr>
+</table>
 
 {% endblock %}
