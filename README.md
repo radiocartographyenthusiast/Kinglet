@@ -1,7 +1,7 @@
 # Pending Project Rename To: Kinglet
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-0.06 <b>Yeast <i>Rising</i></b> <br>
+0.07 <b>Yeast <i>Rising</i></b> <br>
 For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
 This is included starting with the version 0.1 image release, after having recompiled kernel version 5.15.32 on my Pi0W <br>
  <br>
