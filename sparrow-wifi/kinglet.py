@@ -47,6 +47,7 @@ from sparrowcommon import gzipCompress
 
 runningcfg = None
 recordThread = None
+iface2 = None
 
 # ------------------  Config Settings  ------------------------------
 class AConfigSettings():
@@ -294,10 +295,11 @@ class AutoAgentScanThread(Thread):
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='Kinglet Sparrow-wifi agent')
     argparser.add_argument('--staticcoord', help="Use user-defined lat,long,altitude(m) rather than GPS.  Ex: 40.1,-75.3,150", default='', required=False)
-    argparser.add_argument('--recordinterface', help="Automatically start recording locally with the given wireless interface (headless mode) in a recordings directory", default='', required=False)
+    argparser.add_argument('--interface', help="Primary wireless interface", default='wlan0mon', required=False)
     argparser.add_argument('--delaystart', help="Wait <delaystart> seconds before initializing", default=0, required=False)
-    argparser.add_argument('--nofalcon', help="Don't load Falcon plugin (Ex: python3 Kinglet.py --nofalcon true)", default='', required=False)
-    argparser.add_argument('--write', help="Folder to dump logs into (Ex: python3 Kinglet.py --write /home/rad)", default='', required=True)
+    argparser.add_argument('--nofalcon', help="Don't load Falcon plugin (Ex: python3 kinglet.py --nofalcon true)", default='', required=False)
+    argparser.add_argument('--write', help="Folder to dump logs into (Ex: python3 kinglet.py --write /home/rad)", default='', required=True)
+    argparser.add_argument('--iface2', help="Secondary Wireless interface, used by Falcon (Ex: python3 kinglet.py --iface2 wlan1)[Experimental]", default='', required=False)
     args = argparser.parse_args()
 
     if len(args.nofalcon) > 0:
@@ -349,9 +351,14 @@ if __name__ == '__main__':
             print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] Local gpsd Found.  Providing GPS coordinates when synchronized.")
     else:
         print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] No local gpsd running.  No GPS data will be provided.")
-    if len(args.recordinterface) > 0:
-        runningcfg.recordInterface = args.recordinterface
-    startRecord(runningcfg.recordInterface, runningcfg.dumpLoc)
+    if len(args.interface) > 0:
+        runningcfg.recordInterface = args.interface
+    startRecord(runningcfg.recordInterface)
+    if hasFalcon:
+        if len(args.iface2) > 0:
+            iface2 = args.iface2
+            falconWiFiRemoteAgent.startMonitoringInterface(iface2)
+            falconWiFiRemoteAgent.startCapture(iface2, runningcfg.dumpLoc)
     
     # -------------- This is the shutdown process --------------
     #stopRecord()
