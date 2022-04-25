@@ -13,7 +13,7 @@ My goal is to generate heatmaps of reception for home and local networks. What I
 ⚠ Map to be implemented later ⚠ <br>
 ⚠ Database features to be implemented later ⚠ <br>
 ✔ Managing of airodump-ng or Sparrow-WiFi: Kinglet process based on location <br>
-✔ Start/stop monitor mode automatically; can currently be changed by editing monstart.sh <br>
+✔ Start/stop monitor mode automatically <br>
 ✔ Stat logger to track RAM usage, CPU usage, temperature, and disk usage <br>
 ✔ Flask web server, with Waitress <br>
 ✔ Pwnagotchi's "zramfs" to prolong the life of the storage device <br>
@@ -32,11 +32,10 @@ My goal is to generate heatmaps of reception for home and local networks. What I
 -Github: Sparrow-WiFi and Falcon <br>
  <br>
 <h3>Manual Instructions:</h3> <br>
-After all requirements are met, once GPSd is running and your GPS is plugged in, run rce.py <br>
-On this first run it'll generate a settings file (settings.deez) with its "Home Coordinates" <br>
+After all requirements are met, once GPSd is running and your GPS is plugged in, run Kinglet.py (Or just run it and go outside to touch grass) <br>
+On this first run it'll generate a settings file (settings.deez) with its "Home Coordinates" once the software recognizes that the GPS is locked <br>
 When reaching more than 20 feet or so from this point, monitor mode will automatically be enabled and airodump will be start <br>
 Upon returning to within 20 feet or so from this point, monitor mode will automatically be disabled and airodump will be terminated <br>
-The triggerDistance is now a settings item <br>
 To use airodump-ng instead of Sparrow-WiFi, launch with the argument `--airodump true` <br>
 More options available by using the `--help` argument <br>
  <br>
@@ -48,7 +47,7 @@ Default username:password is <b>rad</b>:<b>io</b> <br>
 If you have Apple's Bonjour Services, you can find it on the network at airotool.local for ssh and sftp access <br>
 If your pi is in the same family as the Pi Zero (First Gen), then this image will work for you <br>
 RNDIS Gadget IP default set to 192.168.137.2 from 10.0.0.2, to be more friendly to Windows and its Internet Connection Sharing habits <br>
-Recompiled kernel with Re4son patch to enable monitor mode on pi0w <br>
+Recompiled kernel with Re4son patch to enable monitor mode on pi0w onboard wifi adapter <br>
 
 ``` python
 country=US
