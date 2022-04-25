@@ -1,6 +1,6 @@
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-0.1 <b>Fermented Meatloaf<br>
+0.1 <b>Fermented Meatloaf</b> <br>
 For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
 This is included starting with the version 0.1 image release, after having recompiled kernel version 5.15.34 on my Pi0W <br>
  <br>
