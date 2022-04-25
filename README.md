@@ -15,7 +15,7 @@ My goal is to generate heatmaps of reception for home and local networks. What I
  <br>
 ⚠ Reconnect to home wifi upon return is still being tested ⚠ <br>
 ✔ Managing of airodump-ng or Sparrow-WiFi: Kinglet process based on location <br>
-✔ Start/stop monitor mode automatically; can currently be changed by editing monstart.sh <br>
+✔ Start/stop monitor mode automatically <br>
  <br>
 <h3>Main Requirements:</h3> <br>
 -Sys: Python 3 <br>
