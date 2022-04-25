@@ -44,7 +44,7 @@ Use Balena Etcher to flash the image to your micro sd card <br>
 Make sure to add your own wpa_supplicant.conf to the root of the boot partition to connect to your own wifi automatically: <br>
 <b>Default password included</b> since they wanted to change things<br>
 Default username:password is <b>rad</b>:<b>io</b> <br>
-If you have Apple's Bonjour Services, you can find it on the network at airotool.local for ssh and sftp access <br>
+If you have Apple's Bonjour Services, you can find it on the network at kinglet.local for access <br>
 If your pi is in the same family as the Pi Zero (First Gen), then this image will work for you <br>
 RNDIS Gadget IP default set to 192.168.137.2 from 10.0.0.2, to be more friendly to Windows and its Internet Connection Sharing habits <br>
 Recompiled kernel with Re4son patch to enable monitor mode on pi0w onboard wifi adapter <br>
