@@ -27,7 +27,7 @@
 <form action="" method="post" align="center">
 	<div class="form-group" align="center">
         <label for="DumpFolder">Dump Folder: </label>
-        <input name="dumpFolder" class="form-control" style="text-align:center" id="inputDumpFolder" placeholder="{{ dumpfolder }}">
+        <input name="dumpFolder" class="form-control" readonly style="text-align:center" id="inputDumpFolder" placeholder="{{ dumpfolder }}">
 	</div>
 	<div class="form-group" align="center">
         <label for="HomeLatLon">Home Latitude and Longitude: </label>
@@ -43,9 +43,21 @@
         <input name="homeKey" class="form-control" style="text-align:center" id="inputHomeKey" placeholder="{{ HomeKey }}">
 	</div>
 	<div class="form-group" align="center">
-        <label for="TrigDist">Home WiFi SSID: </label>
+        <label for="TrigDist">Distance From Home to Activation: </label>
         <input name="homeTrigDist" class="form-control" style="text-align:center" id="inputTrigDist" placeholder="{{ triggerDistance }}">
 	</div>
+	{% if iFace %}
+	<div class="form-group" align="center">
+        <label for="interFace">Wireless Interface: </label>
+        <input name="kinterFace" class="form-control" style="text-align:center" id="inputiFace" placeholder="{{ iFace }}">
+	</div>	
+	{% endif %}
+	{% if iFace2 %}
+	<div class="form-group" align="center">
+        <label for="interFace2">Wireless Interface #2: </label>
+        <input name="kinterFace2" class="form-control" style="text-align:center" id="inputiFace2" placeholder="{{ iFace2 }}">
+	</div>	
+	{% endif %}
 	<button type="submit" style="text-align:center" class="btn btn-primary">Update Settings</button>
 </form>
 
