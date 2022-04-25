@@ -31,6 +31,7 @@ import contextlib
 import shutil
 from distutils.dir_util import copy_tree
 import toml
+import fs
 
 
 #global var block
@@ -89,6 +90,17 @@ class MySettings:
                 print("settings hWK " + self.HomeWifiKey)
             except:
                 print("settings hWN not found")
+            try:
+                self.iface = lcfg['kinglet']['iface']
+                print("settings iface " + self.iface)
+            except:
+                print("settings iface not found")
+            try:
+                self.iface2 = lcfg['kinglet']['iface2']
+                print("settings iface2 " + self.iface)
+            except:
+                print("settings iface2 not found")
+
 
             self.TriggerDistance = lcfg['kinglet']['triggerdistance']
             print("settings tD " + str(self.TriggerDistance))
@@ -155,25 +167,9 @@ class MyTelemetryLogger(threading.Thread):
     global brd_temp
     global telem_file_name
     global disk_percent
-    def _cpu_stat(self):
-        """
-        Returns the splitted first line of the /proc/stat file
-        """
-        with open('/proc/stat', 'rt') as fp:
-            return list(map(int,fp.readline().split()[1:]))
     def get_cpu_usage(self):
-        """
-        Returns the current cpuload
-        """
-        parts0 = self._cpu_stat()
-        time.sleep(0.1)
-        parts1 = self._cpu_stat()
-        parts_diff = [p1 - p0 for (p0, p1) in zip(parts0, parts1)]
-        user, nice, sys, idle, iowait, irq, softirq, steal, _guest, _guest_nice = parts_diff
-        idle_sum = idle + iowait
-        non_idle_sum = user + nice + sys + irq + softirq + steal
-        total = idle_sum + non_idle_sum
-        return non_idle_sum / total
+        cpup = str(round(float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline()),2))
+        return cpup+"%"
     def get_mem_usage(self):
         with open('/proc/meminfo') as fp:
             for line in fp:
@@ -187,7 +183,8 @@ class MyTelemetryLogger(threading.Thread):
                 if line.startswith("Cached:"):
                     kb_main_cached = int(line.split()[1])
             kb_mem_used = kb_mem_total - kb_mem_free - kb_main_cached - kb_main_buffers
-            return round(kb_mem_used / kb_mem_total, 1)
+            mpct = str(round(float(kb_mem_used / kb_mem_total), 2))
+            return mpct + "%"
         return 0
     def get_brd_temp(self):
         with open('/sys/class/thermal/thermal_zone0/temp', 'rt') as fp:
@@ -229,8 +226,8 @@ class MyTelemetryLogger(threading.Thread):
             try:
                 outputFile = open(self.telem_file_name, 'a')
                 xds = datetime.datetime.now()
-                self.cpu_usage = str(self.get_cpu_usage())[0:4]+"%"
-                self.mem_usage = str(self.get_mem_usage())+"%"
+                self.cpu_usage = self.get_cpu_usage()
+                self.mem_usage = self.get_mem_usage()
                 self.brd_temp = str(self.get_brd_temp())[0:5]+"F"
                 self.disk_percent = str(self.get_disk_percent())
                 outdata = "[" + xds.strftime("%X") + "], " + self.cpu_usage + ", " + self.mem_usage+ ", " + self.brd_temp + ", " + self.disk_percent + ",\n"
@@ -238,149 +235,8 @@ class MyTelemetryLogger(threading.Thread):
                 outputFile.close()
             except Exception as e:
                 mylogger("Error writing to system telemetry log: " + str(e.__class__))
-            time.sleep(1)
+            time.sleep(3)
         print("myLogger.mySettings.PowerOn = False now") 
-
-class ExperimentalFS():
-    mounts = list()
-
-    @contextlib.contextmanager
-    def ensure_write(filename, mode='w'):
-        path = os.path.dirname(filename)
-        fd, tmp = tempfile.mkstemp(dir=path)
-
-        with os.fdopen(fd, mode) as f:
-            yield f
-            f.flush()
-            os.fsync(f.fileno())
-
-        os.replace(tmp, filename)
-    def size_of(path):
-        """
-        Calculate the sum of all the files in path
-        """
-        total = 0
-        for root, _, files in os.walk(path):
-            for f in files:
-                total += os.path.getsize(os.path.join(root, f))
-        return total
-    def is_mountpoint(path):
-        """
-        Checks if path is mountpoint
-        """
-        return os.system(f"mountpoint -q {path}") == 0
-    def setup_mounts(config):
-        """
-        Sets up all the configured mountpoints
-        """
-        global mounts
-        fs_cfg = config
-        mylogger("[FS] Trying to setup mount %s (%s)", name, fs_cfg)
-        size,unit = re.match(r"(\d+)([a-zA-Z]+)", "100M").groups()
-        target = os.path.join('/run/pwnagotchi/disk/', fs_cfg)
-        is_mounted = is_mountpoint(target)
-        mylogger("[FS] %s is %s mounted", fs_cfg,
-                      "already" if is_mounted else "not yet")
-        m = MemoryFS(
-            fs_cfg,
-            target,
-            size="100M",
-            zram=True,
-            zram_disk_size=f"{int(size)*2}{unit}",
-            rsync=True)
-        if not is_mounted:
-            if not m.mount():
-                mylogger(f"Error while mounting {m.mountpoint}")
-
-            if not m.sync(to_ram=True):
-                mylogger(f"Error while syncing to {m.mountpoint}")
-                m.umount()
-
-        interval = 60
-        if interval:
-            mylogger("[FS] Starting thread to sync %s (interval: %d)",
-                        fs_cfg, interval)
-            _thread.start_new_thread(m.daemonize, (interval,))
-        else:
-            mylogger("[FS] Not syncing %s, because interval is 0",
-            fs_cfg)
-        mounts.append(m)
-    class MemoryFS:
-        @staticmethod
-        def zram_install():
-            if not os.path.exists("/sys/class/zram-control"):
-                mylogger("[FS] Installing zram")
-                return os.system("modprobe zram") == 0
-            return True
-        @staticmethod
-        def zram_dev():
-            mylogger("[FS] Adding zram device")
-            return open("/sys/class/zram-control/hot_add", "rt").read().strip("\n")
-        def __init__(self, mount, disk, size="40M",
-                     zram=True, zram_alg="lz4", zram_disk_size="100M",
-                     zram_fs_type="ext4", rsync=True):
-            self.mountpoint = mount
-            self.disk = disk
-            self.size = size
-            self.zram = zram
-            self.zram_alg = zram_alg
-            self.zram_disk_size = zram_disk_size
-            self.zram_fs_type = zram_fs_type
-            self.zdev = None
-            self.rsync = True
-            self._setup()
-        def _setup(self):
-            if self.zram and MemoryFS.zram_install():
-                # setup zram
-                self.zdev = MemoryFS.zram_dev()
-                open(f"/sys/block/zram{self.zdev}/comp_algorithm", "wt").write(self.zram_alg)
-                open(f"/sys/block/zram{self.zdev}/disksize", "wt").write(self.zram_disk_size)
-                open(f"/sys/block/zram{self.zdev}/mem_limit", "wt").write(self.size)
-                mylogger("[FS] Creating fs (type: %s)", self.zram_fs_type)
-                os.system(f"mke2fs -t {self.zram_fs_type} /dev/zram{self.zdev} >/dev/null 2>&1")
-            # ensure mountpoints exist
-            if not os.path.exists(self.disk):
-                mylogger("[FS] Creating %s", self.disk)
-                os.makedirs(self.disk)
-            if not os.path.exists(self.mountpoint):
-                mylogger("[FS] Creating %s", self.mountpoint)
-                os.makedirs(self.mountpoint)
-        def daemonize(self, interval=60):
-            mylogger("[FS] Daemonized...")
-            while True:
-                self.sync()
-                time.sleep(interval)
-        def sync(self, to_ram=False):
-            source, dest = (self.disk, self.mountpoint) if to_ram else (self.mountpoint, self.disk)
-            needed, actually_free = size_of(source), shutil.disk_usage(dest)[2]
-            if actually_free >= needed:
-                mylogger("[FS] Syncing %s -> %s", source,dest)
-                if self.rsync:
-                    os.system(f"rsync -aXv --inplace --no-whole-file --delete-after {source}/ {dest}/ >/dev/null 2>&1")
-                else:
-                    copy_tree(source, dest, preserve_symlinks=True)
-                os.system("sync")
-                return True
-            return False
-        def mount(self):
-            if os.system(f"mount --bind {self.mountpoint} {self.disk}"):
-                return False
-            if os.system(f"mount --make-private {self.disk}"):
-                return False
-            if self.zram and self.zdev is not None:
-                if os.system(f"mount -t {self.zram_fs_type} -o nosuid,noexec,nodev,user=rad /dev/zram{self.zdev} {self.mountpoint}/"):
-                    return False
-            else:
-                if os.system(f"mount -t tmpfs -o nosuid,noexec,nodev,mode=0755,size={self.size} rad {self.mountpoint}/"):
-                    return False
-            return True
-        def umount(self):
-            if os.system(f"umount -l {self.mountpoint}"):
-                return False
-
-            if os.system(f"umount -l {self.disk}"):
-                return False
-            return True
 
 #defined functions
 def startmoniface(inFace):
@@ -395,23 +251,45 @@ def mylogger(logd):
     logfile = open(logfilename, "a")
     logfile.write("[" + xd.strftime("%X") + "] | " + logd + "\r\n")
     logfile.close()
-def getklogcnt():
-    iklogcnt = 0
-    wdir = mySettings.dumpFolder
-    for path in os.listdir(wdir):
-        if os.path.isfile(os.path.join(wdir, path)):
-            if"kismet" in path:
-                iklogcnt += 1
-    return iklogcnt
-def getcsvcnt():
-    icsvcnt = 0
-    wdir = mySettings.dumpFolder
-    for path in os.listdir(wdir):
-        if os.path.isfile(os.path.join(wdir, path)):
-            if ".csv" in path:
-                icsvcnt += 1
-    return icsvcnt
-    
+def synczfs():
+    if mySettings.usezramfs:
+        for m in fs.mounts:
+            m.sync()
+def shutdown():
+    mySettings.PowerOn=False
+    #sync and unmount zram if enabled
+    synczfs()
+    mgrthread.daemon = True
+    os.system("sync")
+    time.sleep(1)
+    os.system("halt")
+def hotRestart():
+    mySettings.PowerOn=False
+    synczfs()
+    os.system("sync")
+    time.sleep(1)
+    os.system("sudo systemctl restart kinglet.service")
+def coldRestart():
+    mySettings.PowerOn=False
+    #sync and unmount zram if enabled
+    synczfs()
+    mgrthread.daemon = True
+    os.system("sync")
+    time.sleep(1)
+    os.system("sudo reboot")    
+def initflask(mySettings):
+    HOST = environ.get('SERVER_HOST', '0.0.0.0')
+    try:
+        PORT = int(environ.get('SERVER_PORT', '80'))
+    except ValueError:
+        PORT = 80
+    mylogger("Proceeding to launch web ui")
+    try:
+        waitress.serve(app, host=HOST, port=PORT)
+    except:
+        print("Error launching web ui; kinglet will continue headlessly; try running the script with sudo")
+        mylogger("Error launching web ui; kinglet will continue headlessly; try running the script with sudo")
+
 #management thread with nested loop
 def initstartup(mySettings):
     mylogger("Manager Thread Loop spooled up")
@@ -540,28 +418,6 @@ def initstartup(mySettings):
             mylogger("GPSd might be pitching a fit again")
             time.sleep(15)
 
-def initflask(mySettings):
-    HOST = environ.get('SERVER_HOST', '0.0.0.0')
-    try:
-        PORT = int(environ.get('SERVER_PORT', '80'))
-    except ValueError:
-        PORT = 80
-    mylogger("Proceeding to launch web ui")
-    try:
-        waitress.serve(app, host=HOST, port=PORT)
-    except:
-        print("Error launching web ui; kinglet will continue headlessly; try running the script with sudo")
-        mylogger("Error launching web ui; kinglet will continue headlessly; try running the script with sudo")
-
-def shutdown():
-    mySettings.PowerOn=False
-    #sync and unmount zram if enabled
-    
-    mgrthread.daemon = True
-
-def hotRestart():
-    print("hot restart unimplemented")
-
 app = Flask(__name__)
 from flask import request
 
@@ -578,7 +434,6 @@ def home():
         GPSd_Status=myGPSButton.gstatus,
         GPSd_Color=myGPSButton.gcolor
     )
-
 @app.route('/gps-status')
 def gps_status():
     """Renders the about page."""
@@ -605,7 +460,7 @@ def gps_status():
             HomeLoc=gshLoc,
             CurDist=howfar,
             CurLoc=CurrentLocation,
-            
+            telemstat=myStatuses.telemthreadstatus,
             mgrstat=myStatuses.mgrthreadstatus,
             flaskstat=myStatuses.flaskthreadstatus,
             kingletstat=myStatuses.kstatus,
@@ -628,75 +483,34 @@ def gps_status():
             flaskstat=myStatuses.flaskthreadstatus,
             kingletstat=myStatuses.kstatus,
             gpsdstat=myStatuses.gpsdstatus)
-
 @app.route('/settings', methods=['GET', 'POST'])
 def settingspage():
     try:
+        fcnt = 0
+        try:
+            wdir = mySettings.dumpFolder
+            for path in os.listdir(wdir):
+                if os.path.isfile(os.path.join(wdir, path)):
+                    if "kismet" in path:
+                        fcnt += 1
+        except:
+            fcnt = 0
+        ccnt = 0
+        try:
+            wdir = mySettings.dumpFolder
+            for path in os.listdir(wdir):
+                if os.path.isfile(os.path.join(wdir, path)):
+                    if ".csv" in path:
+                        ccnt += 1
+        except:
+            ccnt = 0
         myGPSButton = GPSButton()
-        fcnt = getklogcnt()
-        ccnt = getcsvcnt()
-        retmsg = None
         if request.method == 'POST':
-            if request.form.get("inputDumpFolder"):
-                newDumpLoc = request.form.get("inputDumpFolder")
-            if request.form.get("inputHomeLat"):
-                mySettings.HomeLat = request.form.get("inputHomeLat")
-            if request.form.get("inputHomeLon"):
-                mySettings.HomeLon = request.form.get("inputHomeLon")
-            if request.form.get("inputHomeSid"):
-                mySettings.HomeWifiName = request.form.get("inputHomeSid")
-            if request.form.get("inputHomeKey"):
-                mySettings.HomeWifiKey = request.form.get("inputHomeKey")
-            if request.form.get("inputTrigDist"):
-                mySettings.TriggerDistance = request.form.get("inputTrigDist")
-            #save settings
-            if not os.path.exists(mySettings.SavedDataFilename):
-                newHomeLocation = location.Point(mySettings.HomeLat, mySettings.HomeLon)
-                myCFG = configparser.ConfigParser()
-                myCFG['kinglet'] = { 'hlat': mySettings.HomeLat,
-                                      'hlon': mySettings.HomeLon,
-                                      'homewifiname': mySettings.HomeWifiName,
-                                      'homewifikey': mySettings.HomeWifiKey,
-                                      'triggerdistance': mySettings.TriggerDistance }
-                try:
-                    with open(mySettings.SavedDataFilename, 'w') as configfile:
-                        myCFG.write(configfile)
-                    retmsg = "Settings updated successfully"
-                    mylogger(retmsg)
-                    print(retmsg)
-                except:
-                    retmsg = "Error updating settings"
-                    mylogger(retmsg)
-                    print(retmsg)
-            #render whole page since I don't know how to do simpler; I guess modals are what I'm really wanting?
-            return render_template(
-                'settings.html',
-                title='Settings',
-                year=datetime.datetime.now().year,
-                GPSd_Status=myGPSButton.gstatus,
-                GPSd_Color=myGPSButton.gcolor,
-                dumpfolder=dumpFolder,
-                klogcnt=fcnt,
-                csvcnt=ccnt,
-                totcnt=fcnt+ccnt,
-                HomeLoc=location.Point(mySettings.HomeLat, mySettings.HomeLon),
-                HomeSSID=mySettings.HomeWifiName,
-                HomeKey=mySettings.HomeWifiKey,
-                HomeLati=mySettings.HomeLat,
-                HomeLong=mySettings.HomeLon,
-                triggerDistance=mySettings.TriggerDistance,
-                message=retmsg)
+            print("Unimplemented: Change Settings")
         elif request.method == "GET":
             try:
-                if mySettings.HomeLat != 0:
-                    retloc = location.Point(mySettings.HomeLat, mySettings.HomeLon)
-                    retla = mySettings.HomeLat
-                    retlo = mySettings.HomeLon
-                    retwfn = mySettings.HomeWifiName
-                    retwfk = mySettings.HomeWifiKey
-                    retd = mySettings.triggerDistance
-                    retdl = mySettings.dumpFolder
-                else:
+                print("Getting settings page")
+                if str(mySettings.HomeLat) == "0":
                     retloc = "Uninitialized"
                     retla = "Uninitialized"
                     retlo = "Uninitialized"
@@ -704,6 +518,31 @@ def settingspage():
                     retwfk = "Uninitialized"
                     retd = "Uninitialized"
                     retdl = "Uninitialized"
+                    print("Uninit settings")
+                else:
+                    retloc = str(location.Point(mySettings.HomeLat, mySettings.HomeLon))
+                    #print("retloc")
+                    retla = str(mySettings.HomeLat)
+                    #print("retla")
+                    retlo = str(mySettings.HomeLon)
+                    #print("retlo")
+                    try:
+                        retwfn = mySettings.HomeWifiName
+                    except:
+                        retwfn = ""
+                    #print("retwfn")
+                    try:
+                        retwfk = mySettings.HomeWifiKey
+                    except:
+                        retwfk = ""
+                    #print("retwfk")
+                    try:
+                        retd = mySettings.triggerDistance
+                    except:
+                        retd = 10
+                    #print("retd")
+                    retdl = mySettings.dumpFolder
+                    #print("retdl")
                 return render_template(
                     'settings.html',
                     title='Settings',
@@ -711,18 +550,20 @@ def settingspage():
                     GPSd_Status=myGPSButton.gstatus,
                     GPSd_Color=myGPSButton.gcolor,
                     dumpfolder=retdl,
-                    klogcnt=fcnt,
-                    csvcnt=ccnt,
-                    totcnt=fcnt+ccnt,
+                    klogcnt=str(fcnt),
+                    csvcnt=str(ccnt),
+                    totcnt=str(fcnt+ccnt),
                     HomeLoc=retloc,
                     HomeSSID=retwfn,
                     HomeKey=retwfk,
                     HomeLati=retla,
                     HomeLong=retlo,
-                    triggerDistance=retd)
+                    triggerDistance=retd, 
+                    iFace = mySettings.iface,
+                    iFace2 = mySettings.iface2)
             except Exception as e:
-                mylogger("[Exception]" + str(e.__class__))
-                print("[Exception]" + str(e.__class__))
+                mylogger("[Exception][GPS--2]" + str(e.__class__))
+                print("[Exception][GPS--2]" + str(e.__class__))
                 retloc = "Uninitialized"
                 retla = "Uninitialized"
                 retlo = "Uninitialized"
@@ -737,9 +578,9 @@ def settingspage():
                     GPSd_Status=myGPSButton.gstatus,
                     GPSd_Color=myGPSButton.gcolor,
                     dumpfolder=retdl,
-                    klogcnt=fcnt,
-                    csvcnt=ccnt,
-                    totcnt=fcnt+ccnt,
+                    klogcnt=str(fcnt),
+                    csvcnt=str(ccnt),
+                    totcnt=str(fcnt+ccnt),
                     HomeLoc=retloc,
                     HomeSSID=retwfn,
                     HomeKey=retwfk,
@@ -747,8 +588,8 @@ def settingspage():
                     HomeLong=retlo,
                     triggerDistance=retd)
     except Exception as e:
-        mylogger("[Exception]" + str(e.__class__))
-        print("[Exception]" + str(e.__class__))
+        mylogger("[Exception][GPS--1]" + str(e.__class__))
+        print("[Exception][GPS--1]" + str(e.__class__))
         #it's throwing an exception somewhere around this scope when run on startup and trying to access the settings page, so we're doing this jank
         retloc = "Uninitialized"
         retla = "Uninitialized"
@@ -761,12 +602,12 @@ def settingspage():
             'settings.html',
             title='Settings',
             year=datetime.datetime.now().year,
-            GPSd_Status=myGPSButton.gstatus,
-            GPSd_Color=myGPSButton.gcolor,
+            GPSd_Status="❌",
+            GPSd_Color="Crimson",
             dumpfolder=retdl,
-            klogcnt=fcnt,
-            csvcnt=ccnt,
-            totcnt=fcnt+ccnt,
+            klogcnt=str(fcnt),
+            csvcnt=str(ccnt),
+            totcnt=str(fcnt+ccnt),
             HomeLoc=retloc,
             HomeSSID=retwfn,
             HomeKey=retwfk,
@@ -785,6 +626,8 @@ if __name__ == '__main__':
     argparser.add_argument('--nofalcon', help="Don't load Falcon plugin (Ex: python3 Kinglet.py --nofalcon true)", default='', required=False)
     argparser.add_argument('--usezram', help="Use zram fs to prolong microsd (Ex: python3 Kinglet.py --usezram true)[Experimental]", default='', required=False)
     args = argparser.parse_args()
+    telemthread = MyTelemetryLogger(mySettings)
+    telemthread.start()
     #initstartup()
     if len(args.nofalcon) > 0:
         mySettings.noFalcon = True
@@ -796,17 +639,16 @@ if __name__ == '__main__':
         mySettings.iface2 = args.iface2
     if args.usezram:
         mySettings.usezramfs = True
-        ExperimentalFS.setup_mounts(mySettings.dumpFolder)
-    telemthread = MyTelemetryLogger(mySettings)
-    telemthread.start()
-#    mgrthread = threading.Thread(target=initstartup, args=[mySettings])
-#    mgrthread.start()
-    mgrthread = None
+        fs.setup_mounts(mySettings.dumpFolder)
+        
+    mgrthread = threading.Thread(target=initstartup, args=[mySettings])
+    mgrthread.start()
+#    mgrthread = None
     flaskthread = threading.Thread(target=initflask, args=[mySettings])
     flaskthread.start()
 #    initflask(mySettings)
 #    print(str(PowerOn))
-    initstartup(mySettings)
+#    initstartup(mySettings)
 #    while(PowerOn):
 #        inp = input()
 #        if inp == "q":
