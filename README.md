@@ -2,7 +2,7 @@
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
 0.1 <b>Fermented Meatloaf</b> <br>
 For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
-This is included starting with the version 0.1 image release, after having recompiled kernel version 5.15.34 on my Pi0W <br>
+This is included starting with the version 0.1 image release, the image is built on top of a kali slim image I generated using their build scripts <br>
  <br>
 Your choice between Airodump and Sparrow-Wifi for main monitor source <br>
 Support for a secondary wireless interface, used by Falcon/Airodump in conjunction with Sparrow-WiFi <br>
@@ -18,7 +18,6 @@ My goal is to generate heatmaps of reception for home and local networks. What I
 ✔ Flask web server, with Waitress <br>
 ✔ Pwnagotchi's "zramfs" to prolong the life of the storage device <br>
 ✔ Supports up to 2 monitor mode wireless devices at once <br>
-✔ Recompiled 5.15.34 kernel for Raspberry Pi 0W (1st gen) included with .iso release <br>
  <br>
 <h3>Main Requirements:</h3> <br>
 -Sys: Python 3 <br>
