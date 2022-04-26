@@ -42,6 +42,7 @@ More options available by using the `--help` argument <br>
 <h3>Solo ISO Now Available! [Instructions]</h3> <br>
 Use Balena Etcher to flash the image to your micro sd card <br>
 Make sure to add your own wpa_supplicant.conf to the root of the boot partition to connect to your own wifi automatically: <br>
+After first boot, you may need to use `sudo raspi-config` to expand the file systen <br?
 <b>Default password included</b> since they wanted to change things<br>
 Default username:password is <b>rad</b>:<b>io</b> <br>
 Default root password is <b>toor</b> <br>
