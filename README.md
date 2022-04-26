@@ -1,4 +1,5 @@
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
+![Image](https://github.com/radiocartographyenthusiast/Kinglet/blob/0.1-testing/kinglet-ssh.png?raw=true) <br>
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
 0.1 <b>Fermented Meatloaf</b> <br>
 For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
@@ -43,6 +44,7 @@ Use Balena Etcher to flash the image to your micro sd card <br>
 Make sure to add your own wpa_supplicant.conf to the root of the boot partition to connect to your own wifi automatically: <br>
 <b>Default password included</b> since they wanted to change things<br>
 Default username:password is <b>rad</b>:<b>io</b> <br>
+Default root password is <b>toor</b> <br>
 If you have Apple's Bonjour Services, you can find it on the network at kinglet.local for access <br>
 If your pi is in the same family as the Pi Zero (First Gen), then this image will work for you <br>
 RNDIS Gadget IP default set to 192.168.137.2 from 10.0.0.2, to be more friendly to Windows and its Internet Connection Sharing habits <br>
