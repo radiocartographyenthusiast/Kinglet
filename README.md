@@ -5,8 +5,6 @@ I'm considering a table for coords, and each coord pair gets a table of the wifi
 ![Image](https://github.com/radiocartographyenthusiast/Kinglet/blob/main/kinglet-ssh.png?raw=true) <br>
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
 0.1 <b>Pre-DB</b> <br>
-For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
-This is included starting with the version 0.1 image release, the image is built on top of a kali slim image I generated using their build scripts <br>
  <br>
 Your choice between Airodump and Sparrow-Wifi for main monitor source <br>
 Support for a secondary wireless interface, used by Falcon/Airodump in conjunction with Sparrow-WiFi <br>
@@ -52,7 +50,7 @@ Default root password is <b>toor</b> <br>
 If you have Apple's Bonjour Services, you can find it on the network at kinglet.local for access <br>
 If your pi is in the same family as the Pi Zero (First Gen), then this image will work for you <br>
 RNDIS Gadget IP default set to 192.168.137.2 from 10.0.0.2, to be more friendly to Windows and its Internet Connection Sharing habits <br>
-Recompiled kernel with Re4son patch to enable monitor mode on pi0w onboard wifi adapter <br>
+The image is built on top of a kali slim image I generated using their kali-arm build scripts <br>
 
 ``` python
 country=US
