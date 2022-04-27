@@ -23,7 +23,7 @@
 		<td align="right">Home Location: {{ HomeLoc }}</td>
 	</tr>
 </table>
-
+<br>
 <form action="" method="post" align="center">
 	<div class="form-group" align="center">
         <label for="DumpFolder">Dump Folder: </label>
@@ -58,7 +58,7 @@
         <input name="kinterFace2" class="form-control" style="text-align:center" id="inputiFace2" placeholder="{{ iFace2 }}">
 	</div>	
 	{% endif %}
-	<button type="submit" style="text-align:center" class="btn btn-primary">Update Settings</button>
+	<button type="submit" disabled style="text-align:center" class="btn btn-primary">Update Settings</button>
 </form>
 
 {% endblock %}

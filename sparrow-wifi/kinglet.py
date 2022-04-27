@@ -25,7 +25,7 @@ Reqs:
 
 import os
 import sys
-import datetime
+from datetime import datetime
 import json
 import re
 
@@ -70,7 +70,7 @@ except:
 
 # ------   Global setup ------------
 gpsEngine = None
-curTime = datetime.datetime.now()
+curTime = datetime.now()
 lockList = {}
 noFalcon = False
 
@@ -203,7 +203,7 @@ class AutoAgentScanThread(Thread):
         if  not os.path.exists(saveloc):
             os.makedirs(saveloc)
 
-        now = datetime.datetime.now()
+        now = datetime.now()
 
         self.filename = saveloc + '/wifi-' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day))
         self.filename += "_" + TwoDigits(str(now.hour)) + "_" + TwoDigits(str(now.minute)) + "_" + TwoDigits(str(now.second)) + ".csv"
@@ -212,7 +212,7 @@ class AutoAgentScanThread(Thread):
 
     def run(self):
         global lockList
-
+        print("agent thread running")
         self.threadRunning = True
 
         if self.interface not in lockList.keys():
@@ -225,20 +225,24 @@ class AutoAgentScanThread(Thread):
         while (not self.signalStop):
             # Scan all / normal mode
             if (curLock):
+                #print("acquiring lock")
                 curLock.acquire()
             retCode, errString, wirelessNetworks = WirelessEngine.scanForNetworks(self.interface)
             if (curLock):
+                #print("releasing lock")
                 curLock.release()
-
+            #print("retCode: " + str(retCode) + "; errString: " + errString)
             if (retCode == 0):
                 if gpsEngine.gpsValid():
                     gpsCoord = gpsEngine.lastCoord
+                    print("GPS updated")
                 else:
                     gpsCoord = GPSStatus()
                 # self.statusBar().showMessage('Scan complete.  Found ' + str(len(wirelessNetworks)) + ' networks')
                 if wirelessNetworks and (len(wirelessNetworks) > 0) and (not self.signalStop):
                     for netKey in wirelessNetworks.keys():
                         curNet = wirelessNetworks[netKey]
+                        #print("Seen " + str(curNet))
                         curNet.gps.copy(gpsCoord)
                         curNet.strongestgps.copy(gpsCoord)
                         curKey = curNet.getKey()
@@ -260,9 +264,11 @@ class AutoAgentScanThread(Thread):
                                 curNet.strongestgps.isValid = pastNet.strongestgps.isValid
                             self.discoveredNetworks[curKey] = curNet
                     if not self.signalStop:
+                        #print("Attempting to export network list")
                         self.exportNetworks()
             sleep(self.scanDelay)
         self.threadRunning = False
+        print("agent thread exiting")
     def ouiLookup(self, macAddr):
         clientVendor = ""
         if hasOUILookup:
@@ -278,16 +284,17 @@ class AutoAgentScanThread(Thread):
         except:
             print('ERROR: Unable to write to wifi file ' + self.filename)
             return
-        #self.outputFile.write('macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Last Seen,First Seen,GPS Valid,Latitude,Longitude,Altitude,Speed,Strongest GPS Valid,Strongest Latitude,Strongest Longitude,Strongest Altitude,Strongest Speed\n')
+
         #self.outputFile.write('[timestamp],macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Latitude,Longitude,\n')
         for netKey in self.discoveredNetworks.keys():
             curData = self.discoveredNetworks[netKey]
             vendor = self.ouiLookup(curData.macAddr)
-
+            if curData.ssid == "":
+                curData.ssid = "[NIL]"
             if vendor is None:
-                vendor = ''
-            self.outputFile.write('['+ datetime.datetime.Now().strftime("%X") + '],' + curData.macAddr  + ',' + vendor + ',"' + curData.ssid + '",' + curData.security + ',' + curData.privacy + 
-            self.outputFile.write(',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' + str(curData.bandwidth) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' + '\n')
+                vendor = '[unk]'
+            self.outputFile.write('['+ datetime.now().strftime("%X") + '],' + curData.macAddr  + ',' + vendor + ',"' + curData.ssid + '",' + curData.security + ',' + curData.privacy + 
+                                  ',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' + str(curData.bandwidth) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' + '\n')
 
         self.outputFile.close()
 
@@ -325,20 +332,6 @@ if __name__ == '__main__':
     if dirname not in sys.path:
         sys.path.insert(0, dirname)
 
-    # Check for Falcon offensive plugin
-    pluginsdir = dirname+'/plugins'
-    if  os.path.exists(pluginsdir):
-        if pluginsdir not in sys.path:
-            sys.path.insert(0,pluginsdir)
-        if  os.path.isfile(pluginsdir + '/falconwifi.py'):
-            if not noFalcon:
-                from falconwifi import FalconWiFiRemoteAgent, WPAPSKCrack, WEPCrack
-                hasFalcon = True
-                falconWiFiRemoteAgent = FalconWiFiRemoteAgent()
-                if not falconWiFiRemoteAgent.toolsInstalled():
-                    print("ERROR: aircrack suite of tools does not appear to be installed.  Please install it.")
-                    exit(4)
-
     runningcfg = AConfigSettings()
     # Now start logic
     runningcfg.dumpLoc = args.write
@@ -353,12 +346,27 @@ if __name__ == '__main__':
         print('[' +curTime.strftime("%m/%d/%Y %H:%M:%S") + "] No local gpsd running.  No GPS data will be provided.")
     if len(args.interface) > 0:
         runningcfg.recordInterface = args.interface
-    startRecord(runningcfg.recordInterface)
-    if hasFalcon:
-        if len(args.iface2) > 0:
-            iface2 = args.iface2
-            falconWiFiRemoteAgent.startMonitoringInterface(iface2)
-            falconWiFiRemoteAgent.startCapture(iface2, runningcfg.dumpLoc)
+    startRecord(runningcfg.recordInterface, runningcfg.dumpLoc)
+
+    # Check for Falcon offensive plugin
+    pluginsdir = dirname+'/plugins'
+    if  os.path.exists(pluginsdir):
+        if pluginsdir not in sys.path:
+            sys.path.insert(0,pluginsdir)
+        if  os.path.isfile(pluginsdir + '/falconwifi.py'):
+            if not noFalcon:
+                from falconwifi import FalconWiFiRemoteAgent, WPAPSKCrack, WEPCrack
+                hasFalcon = True
+                falconWiFiRemoteAgent = FalconWiFiRemoteAgent()
+                if len(args.iface2) > 0:
+                    iface2 = args.iface2
+                    falconWiFiRemoteAgent.startMonitoringInterface(iface2)
+                    falconWiFiRemoteAgent.startCapture(iface2, runningcfg.dumpLoc)
+                else:
+                    print("Please specify iface2 for falcon to use")
+                if not falconWiFiRemoteAgent.toolsInstalled():
+                    print("ERROR: aircrack suite of tools does not appear to be installed.  Please install it.")
+                    exit(4)
     
     # -------------- This is the shutdown process --------------
     #stopRecord()
