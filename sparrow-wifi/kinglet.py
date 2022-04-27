@@ -205,8 +205,7 @@ class AutoAgentScanThread(Thread):
 
         now = datetime.now()
 
-        self.filename = saveloc + '/wifi-' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day))
-        self.filename += "_" + TwoDigits(str(now.hour)) + "_" + TwoDigits(str(now.minute)) + "_" + TwoDigits(str(now.second)) + ".csv"
+        self.filename = saveloc + '/wifi-+' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day)) + "+.csv"
 
         print('Capturing on ' + interface + ' and writing wifi to ' + self.filename)
 
