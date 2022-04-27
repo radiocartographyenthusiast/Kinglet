@@ -1,4 +1,4 @@
-Polished some of the things back up, doing some more light testing before releasing the pre-database version <br>
+Polished some of the things back up, doing some more light testing before releasing the pre-database iso build <br>
 Not sure if I want to go elastic or sql, as this is going to be a mess of nested tables <br>
 I'm considering a table for coords, and each coord pair gets a table of the wifi data logged at that point <br>
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
