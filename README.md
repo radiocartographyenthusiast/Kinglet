@@ -1,3 +1,4 @@
+This branch will be retained as the final build before database implementation. If you want to roll your own db handling, this is the branch for you. <br>
 Polished some of the things back up, doing some more light testing before releasing the pre-database iso build <br>
 Not sure if I want to go elastic or sql, as this is going to be a mess of nested tables <br>
 I'm considering a table for coords, and each coord pair gets a table of the wifi data logged at that point <br>
