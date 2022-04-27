@@ -4,9 +4,31 @@
 
 <br>
 
-map gonna go here <br>
-
-selectable table probably gonna go here <br>
-
+<table>
+	<tr>
+		<td align="center" face="Courier New">M F T K G</td>
+	</tr>
+	<tr>
+		<td align="center">{{ mgrstat }} {{ flaskstat }} {{ telemstat }} {{ kingletstat }} {{ gpsdstat }}</td>
+	</tr>
+</table>
+<br>
+<table>
+	<tr>
+		<td align="center">Manager Thread: {{ mgrstat }}</td>
+	</tr>
+	<tr>
+		<td align="center">Flask Thread: {{ flaskstat }}</td>
+	</tr>
+	<tr>
+		<td align="center">Telemetry Thread Status: {{ telemstat }}</td>
+	</tr>
+	<tr>
+		<td align="center">Kinglet Capturing Status: {{ kingletstat }}</td>
+	</tr>
+	<tr>
+		<td align="center">GPSd Status: {{ gpsdstat }}</td>
+	</tr>
+</table>
 
 {% endblock %}

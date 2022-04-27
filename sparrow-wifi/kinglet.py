@@ -175,9 +175,13 @@ class FileSystemFile(object):
             self.timestamp = parser.parse(jsondict['timestamp'])
 # ------------------  Agent auto scan thread  ------------------------------
 class AutoAgentScanThread(Thread):
+    global eventick
+    global curcnt
+    global lastcnt
+    global seenpastsec
     def __init__(self, interface, dumpLoc):
         global lockList
-
+        eventick = False
         super(AutoAgentScanThread, self).__init__()
         self.interface = interface
         self.signalStop = False
@@ -210,6 +214,7 @@ class AutoAgentScanThread(Thread):
         print('Capturing on ' + interface + ' and writing wifi to ' + self.filename)
 
     def run(self):
+        
         global lockList
         print("agent thread running")
         self.threadRunning = True
@@ -238,7 +243,8 @@ class AutoAgentScanThread(Thread):
                 else:
                     gpsCoord = GPSStatus()
                 # self.statusBar().showMessage('Scan complete.  Found ' + str(len(wirelessNetworks)) + ' networks')
-                if wirelessNetworks and (len(wirelessNetworks) > 0) and (not self.signalStop):
+                self.curcnt = len(wirelessNetworks)
+                if wirelessNetworks and (curcnt > 0) and (not self.signalStop):
                     for netKey in wirelessNetworks.keys():
                         curNet = wirelessNetworks[netKey]
                         #print("Seen " + str(curNet))
@@ -265,6 +271,12 @@ class AutoAgentScanThread(Thread):
                     if not self.signalStop:
                         #print("Attempting to export network list")
                         self.exportNetworks()
+            if self.eventick:
+                self.seenpastsec = self.lastcnt + self.curcnt
+                self.eventick = False
+            else:
+                self.lastcnt = self.curcnt
+                self.eventick = True
             sleep(self.scanDelay)
         self.threadRunning = False
         print("agent thread exiting")
@@ -296,6 +308,38 @@ class AutoAgentScanThread(Thread):
                                   ',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' + str(curData.bandwidth) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' + '\n')
 
         self.outputFile.close()
+
+class kingletLink:
+    global iface
+    global iface2
+    global dumpLoc
+    def __init__():
+        seenpastsec = 0
+        iface = ""
+        iface2 = ""
+        dumpLoc = ""
+    def run():
+        runningcfg = AConfigSettings()
+        runningcfg.dumpLoc = self.dumpLoc
+        if len(args.interface) >= 4:
+            runningcfg.recordInterface = self.iface
+            startRecord(runningcfg.recordInterface, runningcfg.dumpLoc)
+        if len(iface2) >= 4:
+            iface2 = self.iface2
+            from falconwifi import FalconWiFiRemoteAgent, WPAPSKCrack, WEPCrack
+                hasFalcon = True
+                falconWiFiRemoteAgent = FalconWiFiRemoteAgent()
+                falconWiFiRemoteAgent.startCapture(iface2, runningcfg.dumpLoc)
+    def terminate():
+        stopRecord()
+        for curKey in lockList.keys():
+            curLock = lockList[curKey]
+        try:
+            curLock.release()
+        except:
+            pass
+    def seenPastSec():
+        return falconWiFiRemoteAgent.seenpastsec
 
 # ----------------- Main -----------------------------
 if __name__ == '__main__':

@@ -19,6 +19,11 @@
 	<tr>
 		<td align="right">Total Undigested File Count: {{ totcnt }}</td>
 	</tr>
+	{% if totcnt != '0' %}
+		<button disabled style="text-align:center" class="btn">Digest Files</button>
+	{% endif %}
+</table>
+<table align="center">
 	<tr>
 		<td align="right">Home Location: {{ HomeLoc }}</td>
 	</tr>
