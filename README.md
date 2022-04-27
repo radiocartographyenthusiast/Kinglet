@@ -1,7 +1,10 @@
+Polished some of the things back up, doing some more light testing before releasing the pre-database version <br>
+Not sure if I want to go elastic or sql, as this is going to be a mess of nested tables <br>
+I'm considering a table for coords, and each coord pair gets a table of the wifi data logged at that point <br>
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 ![Image](https://github.com/radiocartographyenthusiast/Kinglet/blob/0.1-testing/kinglet-ssh.png?raw=true) <br>
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-0.1 <b>Fermented Meatloaf</b> <br>
+0.1 <b>Pre-DB</b> <br>
 For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
 This is included starting with the version 0.1 image release, the image is built on top of a kali slim image I generated using their build scripts <br>
  <br>
