@@ -2,7 +2,7 @@ Polished some of the things back up, doing some more light testing before releas
 Not sure if I want to go elastic or sql, as this is going to be a mess of nested tables <br>
 I'm considering a table for coords, and each coord pair gets a table of the wifi data logged at that point <br>
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
-![Image](https://github.com/radiocartographyenthusiast/Kinglet/blob/0.1-testing/kinglet-ssh.png?raw=true) <br>
+![Image](https://github.com/radiocartographyenthusiast/Kinglet/blob/main/kinglet-ssh.png?raw=true) <br>
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
 0.1 <b>Pre-DB</b> <br>
 For Pi0W it requires a the Re4son-Pi-Kernel to allow the onboard wifi to be put into monitor mode. <br> 
