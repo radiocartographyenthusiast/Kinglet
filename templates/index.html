@@ -4,31 +4,14 @@
 
 <br>
 
-<table>
+<table align="center">
 	<tr>
-		<td align="center" face="Courier New">M F T K G</td>
+		<td align="center"><font face="Lucida" size="4">M-F-T-K-G</font></td>
 	</tr>
 	<tr>
-		<td align="center">{{ mgrstat }} {{ flaskstat }} {{ telemstat }} {{ kingletstat }} {{ gpsdstat }}</td>
+		<td align="center"><font face="Lucida" size="2">{{ mgrstat }} {{ flaskstat }} {{ telemstat }} {{ kingletstat }} {{ gpsdstat }}</font></td>
 	</tr>
 </table>
 <br>
-<table>
-	<tr>
-		<td align="center">Manager Thread: {{ mgrstat }}</td>
-	</tr>
-	<tr>
-		<td align="center">Flask Thread: {{ flaskstat }}</td>
-	</tr>
-	<tr>
-		<td align="center">Telemetry Thread Status: {{ telemstat }}</td>
-	</tr>
-	<tr>
-		<td align="center">Kinglet Capturing Status: {{ kingletstat }}</td>
-	</tr>
-	<tr>
-		<td align="center">GPSd Status: {{ gpsdstat }}</td>
-	</tr>
-</table>
 
 {% endblock %}

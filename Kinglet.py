@@ -12,6 +12,7 @@
  """
  
 #import block
+import sys
 import gpsd
 import os
 import time
@@ -32,7 +33,6 @@ import shutil
 from distutils.dir_util import copy_tree
 import toml
 import fs
-from kinglet import kingletLink
 
 
 #global var block
@@ -99,7 +99,7 @@ class MySettings:
                 print("settings iface not found")
             try:
                 self.iface2 = lcfg['kinglet']['iface2']
-                print("settings iface2 " + self.iface)
+                print("settings iface2 " + self.iface2)
             except:
                 print("settings iface2 not found")
 
@@ -268,15 +268,12 @@ class MyDatabase():
     def loadDatabase():
         print("db loading unimplemented")
     def insertSingleEntryIntoCentralDb():
-        #check if coord pair exists already in pointsTable
+        #check if coord pair exists already in pointsTable, then add data to pointNetworks
         #[[Lat, Long](PK), Avg rssi, network count, entry count]
         
-        #if coord pair exists, add item to its subTable
+        #check if coord pair exists already in netsTable, then add data to latLonTable
         #[[GUID](PK), [datetimestamp], macAddr, vendor, SSID, Security, Privacy, Channel, Frequency, Signal Strength, Strongest Signal Strength, Bandwidth, [Latitude, Longitude]]
         
-        #if coord pair doesn't exist, create new subTable for coord pair and add pair to pointsTable
-        #[[Lat, Long](PK), Avg rssi, network count, entry count]
-        #[[GUID](PK), [datetimestamp], macAddr, vendor, SSID, Security, Privacy, Channel, Frequency, Signal Strength, Strongest Signal Strength, Bandwidth, [Latitude, Longitude]]
         print("db insertion unimplemented")
     def insertSingleEntryIntoNestedDb():
         print("db insertion unimplemented")
@@ -290,6 +287,9 @@ class MyDatabase():
     def digestFalconLogs():
         #double check what airodump's logs look like to put here for reference
         print("file digestion unimplemented")
+    def generateKML():
+        #generate KML file for heatmap
+        print("KML generation unimplemented")
 
 #defined functions
 def startmoniface(inFace):
@@ -578,9 +578,62 @@ def settingspage():
             ccnt = 0
         myGPSButton = GPSButton()
         if request.method == 'POST':
-            print("Unimplemented: Change Settings\n")
-            for fargs in request.form:
-                print("farg: " + str(fargs) + "\n")
+            #print("Unimplemented: Change Settings\n")
+            newConfig = "[kinglet]\n"
+            
+            if request.form.get('inputHomeLat'):
+                mySettings.HomeLat = float(request.form.get('inputHomeLat')) #update if new, otherwise write current
+            newConfig += 'hlat = ' + str(mySettings.HomeLat) + '\n'
+
+            if request.form.get('inputHomeLon'):
+                mySettings.HomeLon = float(request.form.get('inputHomeLon')) #update if new, otherwise write current
+            newConfig += 'hlon = ' + str(mySettings.HomeLon) + '\n'
+            
+            if request.form.get('inputHomeSid'):
+                mySettings.HomeWifiName = request.form.get('inputHomeSid') #update if new, otherwise write current
+            newConfig += 'homewifiname = ' + mySettings.HomeWifiName + '\n'
+            
+            if request.form.get('inputHomeKey'):
+                mySettings.HomeWifiKey = request.form.get('inputHomeKey') #update if new, otherwise write current
+            newConfig += 'homewifikey = ' + mySettings.HomeWifiKey + '\n'
+            
+            if request.form.get('inputTrigDist'):
+                mySettings.TriggerDistance = int(request.form.get('inputTrigDist')) #update if new, otherwise write current
+            newConfig += 'triggerdistance = ' + str(mySettings.TriggerDistance) + '\n'
+            
+            if request.form.get('inputiFace'):
+                mySettings.iface = request.form.get('inputiFace') #update if new, otherwise write current
+            newConfig += 'iface = ' + mySettings.iface + '\n'
+            
+            if request.form.get('inputiFace2'):
+                mySettings.iface2 = request.form.get('inputiFace2') #update if new, otherwise write current
+            newConfig += 'iface2 = ' + mySettings.iface2 + '\n'
+            
+            retloc = str(location.Point(mySettings.HomeLat, mySettings.HomeLon))
+            try:
+                savedcfg = open(mySettings.SavedDataFilename, 'w')
+                savedcfg.write(newConfig)
+                savedcfg.close()
+            except:
+                mylogger("error generating config [web]")
+                print("error generating config [web]")
+            return render_template(
+                    'settings.html',
+                    title='Settings',
+                    year=datetime.datetime.now().year,
+                    GPSd_Status=myGPSButton.gstatus,
+                    GPSd_Color=myGPSButton.gcolor,
+                    dumpfolder=retdl,
+                    klogcnt=str(fcnt),
+                    csvcnt=str(ccnt),
+                    totcnt=str(fcnt+ccnt),
+                    HomeLoc=retloc,
+                    HomeSSID=mySettings.HomeWifiName,
+                    HomeKey=mySettings.HomeWifiKey,
+                    HomeLati=str(mySettings.HomeLat),
+                    HomeLong=str(mySettings.HomeLon),
+                    triggerDistance=str(mySettings.TriggerDistance),
+                    message = "Settings updated successfully!")
         elif request.method == "GET":
             try:
                 print("Getting settings page")
@@ -690,6 +743,14 @@ def settingspage():
             triggerDistance=retd)
 #main
 if __name__ == '__main__':
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    if dirname not in sys.path:
+        sys.path.insert(0, dirname)
+    sparrowdir = dirname+'/sparrow-wifi'    
+    if sparrowdir not in sys.path:
+            sys.path.insert(0,sparrowdir)
+    from kinglet import kingletLink
+    
     airoproc = None
     kingletLinkActive = False
     mySettings = MySettings()

@@ -327,9 +327,9 @@ class kingletLink:
         if len(iface2) >= 4:
             iface2 = self.iface2
             from falconwifi import FalconWiFiRemoteAgent, WPAPSKCrack, WEPCrack
-                hasFalcon = True
-                falconWiFiRemoteAgent = FalconWiFiRemoteAgent()
-                falconWiFiRemoteAgent.startCapture(iface2, runningcfg.dumpLoc)
+            hasFalcon = True
+            falconWiFiRemoteAgent = FalconWiFiRemoteAgent()
+            falconWiFiRemoteAgent.startCapture(iface2, runningcfg.dumpLoc)
     def terminate():
         stopRecord()
         for curKey in lockList.keys():
