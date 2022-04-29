@@ -7,6 +7,63 @@
     <link rel="stylesheet" type="text/css" href="/static/content/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="/static/content/site.css" />
     <script src="/static/scripts/modernizr-2.6.2.js"></script>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"/>
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.css" />
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.css" />
+  <script type='text/javascript' src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
+  <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.js'></script>
+  <style type="text/css">
+    /* for map */
+    html, body {   height: 100%; width: 100%; margin:0; background-color:#201D1D; color:#FEDCDC;}
+    @keyframes opacityPulse {
+      0% {
+        opacity: 0.1;
+      }
+      50% {
+        opacity: 1.0;
+      }
+      100% {
+        opacity: 0.1;
+      }
+    }
+    @keyframes bounceInDown {
+      from, 60%, 75%, 90%, to {
+        animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+      }
+      0% {
+        opacity: 0;
+        transform: translate3d(0, -3000px, 0);
+      }
+      60% {
+        opacity: 1;
+        transform: translate3d(0, 5px, 0);
+      }
+      75% {
+        transform: translate3d(0, -3px, 0);
+      }
+      90% {
+        transform: translate3d(0, 5px, 0);
+      }
+      to {
+        transform: none;
+      }
+    }
+    .bounceInDown {
+      animation-name: bounceInDown;
+      animation-duration: 2s;
+      animation-fill-mode: both;
+    }
+    /* animated radar */
+    .radar {
+    animation: pulsate 1s ease-out;
+    -webkit-animation: pulsate 1s ease-out;
+    -webkit-animation-iteration-count: infinite;
+    /* opacity: 0.0 */
+    }
+    #mapdiv { width: 850px; height: 500px; }
+  </style>
+
 </head>
 
 <body>
@@ -17,12 +74,12 @@
                     <span class="icon-bar"></span>
 					<span class="icon-bar"></span>
                 </button>
-                <a href="/" class="navbar-brand"><font size=14">⌂</font></a>
+                <a href="/" class="navbar-brand"><font size=14>⌂</font></a>
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="/gps-status"><font size=7">🛰:</font> <font color="{{GPSd_Color}}">{{ GPSd_Status }}</font></a></li>
-					<li><a href="/settings"><font size=6">⚙</font></a></li>
+                    <li><a href="/gps-status"><font size=7>🛰:</font> <font color="{{GPSd_Color}}" size=6>{{ GPSd_Status }}</font></a></li>
+					<li><a href="/settings"><font size=6>⚙</font></a></li>
                 </ul>
             </div>
         </div>
