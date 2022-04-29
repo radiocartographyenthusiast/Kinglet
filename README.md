@@ -1,11 +1,9 @@
-This branch will be retained as the final build before database implementation. If you want to roll your own db handling, this is the branch for you. <br>
-Polished some of the things back up, doing some more light testing before releasing the pre-database iso build <br>
 Not sure if I want to go elastic or sql, as this is going to be a mess of nested tables <br>
 I'm considering a table for coords, and each coord pair gets a table of the wifi data logged at that point <br>
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 ![Image](https://github.com/radiocartographyenthusiast/Kinglet/blob/main/kinglet-ssh.png?raw=true) <br>
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-0.1 <b>Pre-DB</b> <br>
+0.15 <b>Pre-DB</b> <br>
  <br>
 Your choice between Airodump and Sparrow-Wifi for main monitor source <br>
 Support for a secondary wireless interface, used by Falcon/Airodump in conjunction with Sparrow-WiFi <br>
