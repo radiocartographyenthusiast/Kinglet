@@ -3,15 +3,39 @@
 {% block content %}
 
 <br>
-
+<body>
 <table align="center">
 	<tr>
 		<td align="center"><font face="Lucida" size="4">M-F-T-K-G</font></td>
 	</tr>
 	<tr>
-		<td align="center"><font face="Lucida" size="2">{{ mgrstat }} {{ flaskstat }} {{ telemstat }} {{ kingletstat }} {{ gpsdstat }}</font></td>
+		<td align="center"><font face="Lucida" size="3" color="Green">{{ mgrstat }} {{ flaskstat }} {{ telemstat }} {{ kingletstat }} {{ gpsdstat }}</font></td>
 	</tr>
 </table>
 <br>
+<table align="center">
+	<tr><td align="center">
+		<div id="mapdiv"></div>
+		<script type="text/javascript">
+			//initialize map obj
+			var mymap = L.map('mapdiv');
+			//setup map tiles
+			var CartoDB_DarkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+				subdomains: 'abcd',
+				opacity:0.8,
+			//      maxZoom: 19
+				}).addTo(mymap);
+			//var object for home coord data from flask
+			var myHomeLocationMarker = {};
+			var myCurrentLocationMarker = {};
+			//draw map object by setting view to current location
+			mymap.setView([{{ retx }}, {{ rety }}], {{ retz }}); //LatX, LonY, Zoom
+		</script>
+	</td></tr>
+</table>
+</body>
 
-{% endblock %}
+
+
+{% endblock content %}

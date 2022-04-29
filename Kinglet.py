@@ -87,21 +87,25 @@ class MySettings:
                 print("settings hWN " + self.HomeWifiName)
             except:
                 print("settings hWN not found")
+                self.HomeWifiName = "dummy_ssid"
             try:
                 self.HomeWifiKey = lcfg['kinglet']['homewifikey']
                 print("settings hWK " + self.HomeWifiKey)
             except:
                 print("settings hWN not found")
+                self.HomeWifiKey = ""
             try:
                 self.iface = lcfg['kinglet']['iface']
                 print("settings iface " + self.iface)
             except:
                 print("settings iface not found")
+                self.iface = "wlan0"
             try:
                 self.iface2 = lcfg['kinglet']['iface2']
                 print("settings iface2 " + self.iface2)
             except:
                 print("settings iface2 not found")
+                self.iface2 = "nil"
 
 
             self.TriggerDistance = lcfg['kinglet']['triggerdistance']
@@ -434,7 +438,7 @@ def initstartup(mySettings):
                             apcmd = apcmd.split(' ')
                             airoproc = subprocess.Popen(apcmd)
                         else:
-                            if len(mySettings.iface2) > 0:
+                            if len(mySettings.iface2) > 3:
                                 #recommend raspi onboard wifi as first interface and external as second
                                 #iw dev scan hasn't worked on my external yet
                                 startmoniface(mySettings.iface2)
@@ -468,7 +472,7 @@ def initstartup(mySettings):
                         #terminate airodump process
                         airoproc.terminate()
                         stopmoniface(mySettings.iface)
-                        if len(mySettings.iface2) > 0:
+                        if len(mySettings.iface2) > 3:
                             stopmoniface(mySettings.iface2)
                         MonitorEnabled = False
                         kingletLinkActive = False
@@ -495,6 +499,14 @@ def home():
     myGPSButton = GPSButton()
     myStatuses = MyStatuses()
     
+    if str(mySettings.HomeLat) == "0":
+        retx = "38.9150327"
+        rety = "-77.0117685"
+        retz = "12"
+    else:
+        retx = str(mySettings.HomeLat)
+        rety = str(mySettings.HomeLon)
+        retz = "18"
     return render_template(
         'index.html',
         title='Radiomaps Я Us',
@@ -505,7 +517,10 @@ def home():
         mgrstat=myStatuses.mgrthreadstatus,
         flaskstat=myStatuses.flaskthreadstatus,
         kingletstat=myStatuses.kstatus,
-        gpsdstat=myStatuses.gpsdstatus)
+        gpsdstat=myStatuses.gpsdstatus,
+        retx=retx,
+        rety=rety,
+        retz=retz)
 @app.route('/gps-status')
 def gps_status():
     """Renders the about page."""
@@ -557,140 +572,94 @@ def gps_status():
             gpsdstat=myStatuses.gpsdstatus)
 @app.route('/settings', methods=['GET', 'POST'])
 def settingspage():
+    fcnt = 0
     try:
+        wdir = mySettings.dumpFolder
+        for path in os.listdir(wdir):
+            if os.path.isfile(os.path.join(wdir, path)):
+                if "kismet" in path:
+                    fcnt += 1
+    except:
         fcnt = 0
-        try:
-            wdir = mySettings.dumpFolder
-            for path in os.listdir(wdir):
-                if os.path.isfile(os.path.join(wdir, path)):
-                    if "kismet" in path:
-                        fcnt += 1
-        except:
-            fcnt = 0
+    ccnt = 0
+    try:
+        wdir = mySettings.dumpFolder
+        for path in os.listdir(wdir):
+            if os.path.isfile(os.path.join(wdir, path)):
+                if ".csv" in path:
+                    ccnt += 1
+    except:
         ccnt = 0
-        try:
-            wdir = mySettings.dumpFolder
-            for path in os.listdir(wdir):
-                if os.path.isfile(os.path.join(wdir, path)):
-                    if ".csv" in path:
-                        ccnt += 1
-        except:
-            ccnt = 0
-        myGPSButton = GPSButton()
-        if request.method == 'POST':
-            #print("Unimplemented: Change Settings\n")
-            newConfig = "[kinglet]\n"
-            
-            if request.form.get('inputHomeLat'):
-                mySettings.HomeLat = float(request.form.get('inputHomeLat')) #update if new, otherwise write current
-            newConfig += 'hlat = ' + str(mySettings.HomeLat) + '\n'
+    myGPSButton = GPSButton()
+    if request.method == 'POST':
+        #print("Unimplemented: Change Settings\n")
+        newConfig = "[kinglet]\n"
+        print("Making new config")
+        retdl = mySettings.dumpFolder
+        if request.form.get('inputHomeLat'):
+            print("new home lat")
+            mySettings.HomeLat = float(request.form.get('inputHomeLat')) #update if new, otherwise write current
+            newConfig += 'hlat = ' + request.form.get('inputHomeLat') + '\n'
 
-            if request.form.get('inputHomeLon'):
-                mySettings.HomeLon = float(request.form.get('inputHomeLon')) #update if new, otherwise write current
-            newConfig += 'hlon = ' + str(mySettings.HomeLon) + '\n'
-            
-            if request.form.get('inputHomeSid'):
-                mySettings.HomeWifiName = request.form.get('inputHomeSid') #update if new, otherwise write current
-            newConfig += 'homewifiname = ' + mySettings.HomeWifiName + '\n'
-            
+        if request.form.get('inputHomeLon'):
+            print("new home lon")
+            mySettings.HomeLon = float(request.form.get('inputHomeLon')) #update if new, otherwise write current
+            newConfig += 'hlon = ' + request.form.get('inputHomeLon') + '\n'
+        
+        if request.form.get('inputHomeSid'):
+            mySettings.HomeWifiName = request.form.get('inputHomeSid') #update if new, otherwise write current
+            newConfig += 'homewifiname = ' + request.form.get('inputHomeSid') + '\n'
+        try:
             if request.form.get('inputHomeKey'):
                 mySettings.HomeWifiKey = request.form.get('inputHomeKey') #update if new, otherwise write current
-            newConfig += 'homewifikey = ' + mySettings.HomeWifiKey + '\n'
-            
-            if request.form.get('inputTrigDist'):
-                mySettings.TriggerDistance = int(request.form.get('inputTrigDist')) #update if new, otherwise write current
-            newConfig += 'triggerdistance = ' + str(mySettings.TriggerDistance) + '\n'
-            
-            if request.form.get('inputiFace'):
-                mySettings.iface = request.form.get('inputiFace') #update if new, otherwise write current
-            newConfig += 'iface = ' + mySettings.iface + '\n'
-            
-            if request.form.get('inputiFace2'):
-                mySettings.iface2 = request.form.get('inputiFace2') #update if new, otherwise write current
-            newConfig += 'iface2 = ' + mySettings.iface2 + '\n'
-            
-            retloc = str(location.Point(mySettings.HomeLat, mySettings.HomeLon))
-            try:
-                savedcfg = open(mySettings.SavedDataFilename, 'w')
-                savedcfg.write(newConfig)
-                savedcfg.close()
-            except:
-                mylogger("error generating config [web]")
-                print("error generating config [web]")
-            return render_template(
-                    'settings.html',
-                    title='Settings',
-                    year=datetime.datetime.now().year,
-                    GPSd_Status=myGPSButton.gstatus,
-                    GPSd_Color=myGPSButton.gcolor,
-                    dumpfolder=retdl,
-                    klogcnt=str(fcnt),
-                    csvcnt=str(ccnt),
-                    totcnt=str(fcnt+ccnt),
-                    HomeLoc=retloc,
-                    HomeSSID=mySettings.HomeWifiName,
-                    HomeKey=mySettings.HomeWifiKey,
-                    HomeLati=str(mySettings.HomeLat),
-                    HomeLong=str(mySettings.HomeLon),
-                    triggerDistance=str(mySettings.TriggerDistance),
-                    message = "Settings updated successfully!")
-        elif request.method == "GET":
-            try:
-                print("Getting settings page")
-                if str(mySettings.HomeLat) == "0":
-                    retloc = "Uninitialized"
-                    retla = "Uninitialized"
-                    retlo = "Uninitialized"
-                    retwfn = "Uninitialized"
-                    retwfk = "Uninitialized"
-                    retd = "Uninitialized"
-                    retdl = "Uninitialized"
-                    print("Uninit settings")
-                else:
-                    retloc = str(location.Point(mySettings.HomeLat, mySettings.HomeLon))
-                    #print("retloc")
-                    retla = str(mySettings.HomeLat)
-                    #print("retla")
-                    retlo = str(mySettings.HomeLon)
-                    #print("retlo")
-                    try:
-                        retwfn = mySettings.HomeWifiName
-                    except:
-                        retwfn = ""
-                    #print("retwfn")
-                    try:
-                        retwfk = mySettings.HomeWifiKey
-                    except:
-                        retwfk = ""
-                    #print("retwfk")
-                    try:
-                        retd = mySettings.triggerDistance
-                    except:
-                        retd = 10
-                    #print("retd")
-                    retdl = mySettings.dumpFolder
-                    #print("retdl")
-                return render_template(
-                    'settings.html',
-                    title='Settings',
-                    year=datetime.datetime.now().year,
-                    GPSd_Status=myGPSButton.gstatus,
-                    GPSd_Color=myGPSButton.gcolor,
-                    dumpfolder=retdl,
-                    klogcnt=str(fcnt),
-                    csvcnt=str(ccnt),
-                    totcnt=str(fcnt+ccnt),
-                    HomeLoc=retloc,
-                    HomeSSID=retwfn,
-                    HomeKey=retwfk,
-                    HomeLati=retla,
-                    HomeLong=retlo,
-                    triggerDistance=retd, 
-                    iFace = mySettings.iface,
-                    iFace2 = mySettings.iface2)
-            except Exception as e:
-                mylogger("[Exception][GPS--2]" + str(e.__class__))
-                print("[Exception][GPS--2]" + str(e.__class__))
+                newConfig += 'homewifikey = ' + request.form.get('inputHomeKey') + '\n'
+                retwfk = request.form.get('inputHomeKey')
+            else:
+                retwfk = "?"
+        except:
+            print("hwk err")
+            retwfk = "err"
+        if request.form.get('inputTrigDist'):
+            mySettings.TriggerDistance = int(request.form.get('inputTrigDist')) #update if new, otherwise write current
+            newConfig += 'triggerdistance = ' + request.form.get('inputTrigDist') + '\n'
+        
+        if request.form.get('inputiFace'):
+            mySettings.iface = request.form.get('inputiFace') #update if new, otherwise write current
+            newConfig += 'iface = ' + request.form.get('inputiFace') + '\n'
+        
+        if request.form.get('inputiFace2'):
+            mySettings.iface2 = request.form.get('inputiFace2') #update if new, otherwise write current
+            newConfig += 'iface2 = ' + request.form.get('inputiFace2') + '\n'
+        
+        retloc = "Testing"#str(location.Point(mySettings.HomeLat, mySettings.HomeLon))
+        try:
+            savedcfg = open(mySettings.SavedDataFilename, 'w')
+            savedcfg.write(newConfig)
+            savedcfg.close()
+        except:
+            mylogger("error generating config [web]")
+            print("error generating config [web]")
+        return render_template(
+                'settings.html',
+                title='Settings',
+                year=datetime.datetime.now().year,
+                GPSd_Status=myGPSButton.gstatus,
+                GPSd_Color=myGPSButton.gcolor,
+                dumpfolder=retdl,
+                klogcnt=str(fcnt),
+                csvcnt=str(ccnt),
+                totcnt=str(fcnt+ccnt),
+                HomeLoc=retloc,
+                HomeSSID=mySettings.HomeWifiName,
+                HomeKey=retwfk,
+                HomeLati=str(mySettings.HomeLat),
+                HomeLong=str(mySettings.HomeLon),
+                triggerDistance=str(mySettings.TriggerDistance),
+                message = "Settings updated successfully!")
+    elif request.method == "GET":
+        try:
+            print("Getting settings page")
+            if str(mySettings.HomeLat) == "0":
                 retloc = "Uninitialized"
                 retla = "Uninitialized"
                 retlo = "Uninitialized"
@@ -698,49 +667,76 @@ def settingspage():
                 retwfk = "Uninitialized"
                 retd = "Uninitialized"
                 retdl = "Uninitialized"
-                return render_template(
-                    'settings.html',
-                    title='Settings',
-                    year=datetime.datetime.now().year,
-                    GPSd_Status=myGPSButton.gstatus,
-                    GPSd_Color=myGPSButton.gcolor,
-                    dumpfolder=retdl,
-                    klogcnt=str(fcnt),
-                    csvcnt=str(ccnt),
-                    totcnt=str(fcnt+ccnt),
-                    HomeLoc=retloc,
-                    HomeSSID=retwfn,
-                    HomeKey=retwfk,
-                    HomeLati=retla,
-                    HomeLong=retlo,
-                    triggerDistance=retd)
-    except Exception as e:
-        mylogger("[Exception][GPS--1]" + str(e.__class__))
-        print("[Exception][GPS--1]" + str(e.__class__))
-        #it's throwing an exception somewhere around this scope when run on startup and trying to access the settings page, so we're doing this jank
-        retloc = "Uninitialized"
-        retla = "Uninitialized"
-        retlo = "Uninitialized"
-        retwfn = "Uninitialized"
-        retwfk = "Uninitialized"
-        retd = "Uninitialized"
-        retdl = "Uninitialized"
-        return render_template(
-            'settings.html',
-            title='Settings',
-            year=datetime.datetime.now().year,
-            GPSd_Status="❌",
-            GPSd_Color="Crimson",
-            dumpfolder=retdl,
-            klogcnt=str(fcnt),
-            csvcnt=str(ccnt),
-            totcnt=str(fcnt+ccnt),
-            HomeLoc=retloc,
-            HomeSSID=retwfn,
-            HomeKey=retwfk,
-            HomeLati=retla,
-            HomeLong=retlo,
-            triggerDistance=retd)
+                print("Uninit settings")
+            else:
+                retloc = str(location.Point(mySettings.HomeLat, mySettings.HomeLon))
+                #print("retloc")
+                retla = str(mySettings.HomeLat)
+                #print("retla")
+                retlo = str(mySettings.HomeLon)
+                #print("retlo")
+                try:
+                    retwfn = mySettings.HomeWifiName
+                except:
+                    retwfn = ""
+                #print("retwfn")
+                try:
+                    retwfk = mySettings.HomeWifiKey
+                except:
+                    retwfk = ""
+                #print("retwfk")
+                try:
+                    retd = mySettings.triggerDistance
+                except:
+                    retd = 10
+                #print("retd")
+                retdl = mySettings.dumpFolder
+                #print("retdl")
+            return render_template(
+                'settings.html',
+                title='Settings',
+                year=datetime.datetime.now().year,
+                GPSd_Status=myGPSButton.gstatus,
+                GPSd_Color=myGPSButton.gcolor,
+                dumpfolder=retdl,
+                klogcnt=str(fcnt),
+                csvcnt=str(ccnt),
+                totcnt=str(fcnt+ccnt),
+                HomeLoc=retloc,
+                HomeSSID=retwfn,
+                HomeKey=retwfk,
+                HomeLati=retla,
+                HomeLong=retlo,
+                triggerDistance=retd, 
+                iFace = mySettings.iface,
+                iFace2 = mySettings.iface2)
+        except Exception as e:
+            mylogger("[Exception][GPS--2]" + str(e.__class__))
+            print("[Exception][GPS--2]" + str(e.__class__))
+            retloc = "Uninitialized"
+            retla = "Uninitialized"
+            retlo = "Uninitialized"
+            retwfn = "Uninitialized"
+            retwfk = "Uninitialized"
+            retd = "Uninitialized"
+            retdl = "Uninitialized"
+            return render_template(
+                'settings.html',
+                title='Settings',
+                year=datetime.datetime.now().year,
+                GPSd_Status=myGPSButton.gstatus,
+                GPSd_Color=myGPSButton.gcolor,
+                dumpfolder=retdl,
+                klogcnt=str(fcnt),
+                csvcnt=str(ccnt),
+                totcnt=str(fcnt+ccnt),
+                HomeLoc=retloc,
+                HomeSSID=retwfn,
+                HomeKey=retwfk,
+                HomeLati=retla,
+                HomeLong=retlo,
+                triggerDistance=retd)
+
 #main
 if __name__ == '__main__':
     dirname, filename = os.path.split(os.path.abspath(__file__))
