@@ -175,7 +175,7 @@ class FileSystemFile(object):
             self.timestamp = parser.parse(jsondict['timestamp'])
 # ------------------  Agent auto scan thread  ------------------------------
 class AutoAgentScanThread(Thread):
-    global eventick
+#    global eventick
     global curcnt
     global lastcnt
     global seenpastsec
@@ -244,7 +244,7 @@ class AutoAgentScanThread(Thread):
                     gpsCoord = GPSStatus()
                 # self.statusBar().showMessage('Scan complete.  Found ' + str(len(wirelessNetworks)) + ' networks')
                 self.curcnt = len(wirelessNetworks)
-                if wirelessNetworks and (curcnt > 0) and (not self.signalStop):
+                if wirelessNetworks and (self.curcnt > 0) and (not self.signalStop):
                     for netKey in wirelessNetworks.keys():
                         curNet = wirelessNetworks[netKey]
                         #print("Seen " + str(curNet))
@@ -271,12 +271,12 @@ class AutoAgentScanThread(Thread):
                     if not self.signalStop:
                         #print("Attempting to export network list")
                         self.exportNetworks()
-            if self.eventick:
-                self.seenpastsec = self.lastcnt + self.curcnt
-                self.eventick = False
-            else:
-                self.lastcnt = self.curcnt
-                self.eventick = True
+#            if self.eventick:
+#                self.seenpastsec = self.lastcnt + self.curcnt
+#                self.eventick = False
+#            else:
+#                self.lastcnt = self.curcnt
+#                self.eventick = True
             sleep(self.scanDelay)
         self.threadRunning = False
         print("agent thread exiting")
@@ -348,7 +348,7 @@ if __name__ == '__main__':
     argparser.add_argument('--interface', help="Primary wireless interface", default='wlan0mon', required=False)
     argparser.add_argument('--delaystart', help="Wait <delaystart> seconds before initializing", default=0, required=False)
     argparser.add_argument('--nofalcon', help="Don't load Falcon plugin (Ex: python3 kinglet.py --nofalcon true)", default='', required=False)
-    argparser.add_argument('--write', help="Folder to dump logs into (Ex: python3 kinglet.py --write /home/rad)", default='', required=True)
+    argparser.add_argument('--write', help="Folder to dump logs into (Ex: python3 kinglet.py --write /home/rad)", default='', required=False)
     argparser.add_argument('--iface2', help="Secondary Wireless interface, used by Falcon (Ex: python3 kinglet.py --iface2 wlan1)[Experimental]", default='', required=False)
     args = argparser.parse_args()
 
@@ -377,7 +377,10 @@ if __name__ == '__main__':
 
     runningcfg = AConfigSettings()
     # Now start logic
-    runningcfg.dumpLoc = args.write
+    if len(args.write)>0:
+        runningcfg.dumpLoc = args.write
+    else:
+        runningcfg.dumpLoc = os.getcwd() + "/logs"
     # Check the local GPS.
     if GPSEngine.GPSDRunning():
         gpsEngine.start()
