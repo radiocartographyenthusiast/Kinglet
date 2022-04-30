@@ -67,7 +67,7 @@ class MySettings:
         self.SavedDataFilename = "settings.deez"
         self.PowerOn = True
         self.iface = "wlan0"
-        self.iface2 = ""
+        self.iface2 = "nil"
         self.dumpFolder = os.getcwd() + "/logs"
         self.usezramfs = False
         self.TriggerDistance = 10
@@ -435,8 +435,10 @@ def initstartup(mySettings):
                         MonitorEnabled = True
                         if mySettings.useAirodump:
                             apcmd = "sudo airodump-ng --gpsd -w " + mySettings.dumpFolder + " --manufacturer --wps --output-format kismet " + mySettings.iface + "mon"
+                            mylogger("[os] " + apcmd)
                             apcmd = apcmd.split(' ')
                             airoproc = subprocess.Popen(apcmd)
+                            mylogger("[os] launched")
                         else:
                             if len(mySettings.iface2) > 3:
                                 #recommend raspi onboard wifi as first interface and external as second
@@ -446,18 +448,22 @@ def initstartup(mySettings):
                                 #kingletLink.iface = mySettings.iface
                                 #kingletLink.iface2 = mySettings.iface2
                                 #kingletLink.dumpLoc = mySettings.dumpFolder
-                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --write " + mySettings.dumpFolder + " --iface2 " + mySettings.iface2
+                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --iface2 " + mySettings.iface2 + "mon"
+                                mylogger("[os] " + apcmd)
                                 apcmd = apcmd.split(' ')
                                 airoproc = subprocess.Popen(apcmd)
                                 airoproc.run()
+                                mylogger("[os] launched")
                             else:
                                 #airoproc = kingletLink()
                                 #kingletLink.iface = mySettings.iface
                                 #kingletLink.dumpLoc = mySettings.dumpFolder
-                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --write " + mySettings.dumpFolder + " --nofalcon true"
+                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --nofalcon true"
+                                mylogger("[os] " + apcmd)
                                 apcmd = apcmd.split(' ')
                                 airoproc = subprocess.Popen(apcmd)
                                 airoproc.run()
+                                mylogger("[os] launched")
                             #kingletLinkActive = True
                         
                         #print(apcmd)
@@ -743,6 +749,10 @@ def settingspage():
 
 #main
 if __name__ == '__main__':
+    #u-blox7/VK172 config commands
+    #os.system("echo -e -n \"\\xB5\\x62\\x06\\x08\\x06\\x00\\xF4\\x01\\x01\\x00\\x01\\x00\" > /dev/ttyACM0") #cfg-rate 2Hz
+    #os.system("echo -e -n \"\\xB5\\x62\\x06\\x24\\x24\\x00\\xFF\\xFF\\x03\\x03\\x00\\x00\\x00\\x00\\x10\\x27\\x00\\x00\\x05\\x00\\xFA\\x00\\xFA\\x00\\x64\\x00\\x2C\\x01\\x00\\x3C\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\" > /dev/ttyACM0") #cfg-nav pedestrian
+    
     dirname, filename = os.path.split(os.path.abspath(__file__))
     if dirname not in sys.path:
         sys.path.insert(0, dirname)
