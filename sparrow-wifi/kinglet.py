@@ -348,7 +348,7 @@ if __name__ == '__main__':
     argparser.add_argument('--interface', help="Primary wireless interface", default='wlan0mon', required=False)
     argparser.add_argument('--delaystart', help="Wait <delaystart> seconds before initializing", default=0, required=False)
     argparser.add_argument('--nofalcon', help="Don't load Falcon plugin (Ex: python3 kinglet.py --nofalcon true)", default='', required=False)
-    argparser.add_argument('--write', help="Folder to dump logs into (Ex: python3 kinglet.py --write /home/rad)", default='', required=True)
+    argparser.add_argument('--write', help="Folder to dump logs into (Ex: python3 kinglet.py --write /home/rad)", default='', required=False)
     argparser.add_argument('--iface2', help="Secondary Wireless interface, used by Falcon (Ex: python3 kinglet.py --iface2 wlan1)[Experimental]", default='', required=False)
     args = argparser.parse_args()
 
@@ -377,7 +377,10 @@ if __name__ == '__main__':
 
     runningcfg = AConfigSettings()
     # Now start logic
-    runningcfg.dumpLoc = args.write
+    if len(args.write)>0:
+        runningcfg.dumpLoc = args.write
+    else:
+        runningcfg.dumpLoc = os.getcwd() + "/logs"
     # Check the local GPS.
     if GPSEngine.GPSDRunning():
         gpsEngine.start()
