@@ -106,7 +106,14 @@ class MySettings:
             except:
                 print("settings iface2 not found")
                 self.iface2 = "nil"
-
+            try:
+                if lcfg['kinglet']['usezramfs'] == "True":
+                    self.usezramfs = True
+                    print("using zramfs")
+                    mylogger("using zramfs")
+            except:
+                print("not using zramfs")
+                mylogger("not using zramfs")
 
             self.TriggerDistance = int(lcfg['kinglet']['triggerdistance'])
             print("settings tD " + str(self.TriggerDistance))
