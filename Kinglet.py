@@ -448,7 +448,7 @@ def initstartup(mySettings):
                                 #kingletLink.iface = mySettings.iface
                                 #kingletLink.iface2 = mySettings.iface2
                                 #kingletLink.dumpLoc = mySettings.dumpFolder
-                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --iface2 " + mySettings.iface2
+                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --iface2 " + mySettings.iface2 + "mon"
                                 mylogger("[os] " + apcmd)
                                 apcmd = apcmd.split(' ')
                                 airoproc = subprocess.Popen(apcmd)
