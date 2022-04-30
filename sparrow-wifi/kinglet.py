@@ -175,7 +175,7 @@ class FileSystemFile(object):
             self.timestamp = parser.parse(jsondict['timestamp'])
 # ------------------  Agent auto scan thread  ------------------------------
 class AutoAgentScanThread(Thread):
-    global eventick
+#    global eventick
     global curcnt
     global lastcnt
     global seenpastsec
@@ -244,7 +244,7 @@ class AutoAgentScanThread(Thread):
                     gpsCoord = GPSStatus()
                 # self.statusBar().showMessage('Scan complete.  Found ' + str(len(wirelessNetworks)) + ' networks')
                 self.curcnt = len(wirelessNetworks)
-                if wirelessNetworks and (curcnt > 0) and (not self.signalStop):
+                if wirelessNetworks and (self.curcnt > 0) and (not self.signalStop):
                     for netKey in wirelessNetworks.keys():
                         curNet = wirelessNetworks[netKey]
                         #print("Seen " + str(curNet))
@@ -271,12 +271,12 @@ class AutoAgentScanThread(Thread):
                     if not self.signalStop:
                         #print("Attempting to export network list")
                         self.exportNetworks()
-            if self.eventick:
-                self.seenpastsec = self.lastcnt + self.curcnt
-                self.eventick = False
-            else:
-                self.lastcnt = self.curcnt
-                self.eventick = True
+#            if self.eventick:
+#                self.seenpastsec = self.lastcnt + self.curcnt
+#                self.eventick = False
+#            else:
+#                self.lastcnt = self.curcnt
+#                self.eventick = True
             sleep(self.scanDelay)
         self.threadRunning = False
         print("agent thread exiting")

@@ -108,7 +108,7 @@ class MySettings:
                 self.iface2 = "nil"
 
 
-            self.TriggerDistance = lcfg['kinglet']['triggerdistance']
+            self.TriggerDistance = int(lcfg['kinglet']['triggerdistance'])
             print("settings tD " + str(self.TriggerDistance))
 
 class GPSButton:
@@ -243,7 +243,7 @@ class MyTelemetryLogger(threading.Thread):
                         netsSeen = 0
                 except:
                     netsSeen = -1
-                outdata = "[" + xds.strftime("%X") + "], " + self.cpu_usage + ", " + self.mem_usage+ ", " + self.brd_temp + ", " + self.disk_percent + ", " + netsSeen +"\n"
+                outdata = "[" + xds.strftime("%X") + "], " + self.cpu_usage + ", " + self.mem_usage+ ", " + self.brd_temp + ", " + self.disk_percent + ",\n"
                 outputFile.write(outdata)
                 outputFile.close()
             except Exception as e:
@@ -442,19 +442,23 @@ def initstartup(mySettings):
                                 #recommend raspi onboard wifi as first interface and external as second
                                 #iw dev scan hasn't worked on my external yet
                                 startmoniface(mySettings.iface2)
-                                airoproc = kingletLink()
-                                kingletLink.iface = mySettings.iface
-                                kingletLink.iface2 = mySettings.iface2
-                                kingletLink.dumpLoc = mySettings.dumpFolder
+                                #airoproc = kingletLink()
+                                #kingletLink.iface = mySettings.iface
+                                #kingletLink.iface2 = mySettings.iface2
+                                #kingletLink.dumpLoc = mySettings.dumpFolder
+                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --write " + mySettings.dumpFolder + " --iface2 " + mySettings.iface2
+                                apcmd = apcmd.split(' ')
+                                airoproc = subprocess.Popen(apcmd)
                                 airoproc.run()
-                                #apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --write " + mySettings.dumpFolder + " --iface2 " + mySettings.iface2
                             else:
-                                airoproc = kingletLink()
-                                kingletLink.iface = mySettings.iface
-                                kingletLink.dumpLoc = mySettings.dumpFolder
+                                #airoproc = kingletLink()
+                                #kingletLink.iface = mySettings.iface
+                                #kingletLink.dumpLoc = mySettings.dumpFolder
+                                apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --write " + mySettings.dumpFolder + " --nofalcon true"
+                                apcmd = apcmd.split(' ')
+                                airoproc = subprocess.Popen(apcmd)
                                 airoproc.run()
-                                #apcmd = "sudo python3 " + os.getcwd() + "/sparrow-wifi/kinglet.py --interface " + mySettings.iface + "mon" + " --write " + mySettings.dumpFolder + " --nofalcon true"
-                            kingletLinkActive = True
+                            #kingletLinkActive = True
                         
                         #print(apcmd)
                         
@@ -475,7 +479,7 @@ def initstartup(mySettings):
                         if len(mySettings.iface2) > 3:
                             stopmoniface(mySettings.iface2)
                         MonitorEnabled = False
-                        kingletLinkActive = False
+                        #kingletLinkActive = False
                         #reconnect to home wifi
                         if mySettings.HomeWifiName != "dummy_ssid":
                             os.system(f'''cmd /c "netsh wlan connect name = {mySettings.HomeWifiName}"''')
