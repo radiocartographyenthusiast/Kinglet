@@ -209,7 +209,7 @@ class AutoAgentScanThread(Thread):
 
         now = datetime.now()
 
-        self.filename = saveloc + '/wifi-+' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day)) + "+.csv"
+        self.filename = saveloc + '/wifi-+' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day))+ "-" + TwoDigits(str(now.hour)) + "+.csv"
 
         print('Capturing on ' + interface + ' and writing wifi to ' + self.filename)
 
@@ -301,7 +301,7 @@ class AutoAgentScanThread(Thread):
             curData = self.discoveredNetworks[netKey]
             vendor = self.ouiLookup(curData.macAddr)
             if curData.ssid == "":
-                curData.ssid = "[NIL]"
+                curData.ssid = "[nsi]"
             if vendor is None:
                 vendor = '[unk]'
             self.outputFile.write('['+ datetime.now().strftime("%X") + '],' + curData.macAddr  + ',' + vendor + ',"' + curData.ssid + '",' + curData.security + ',' + curData.privacy + 
