@@ -209,7 +209,7 @@ class AutoAgentScanThread(Thread):
 
         now = datetime.now()
 
-        self.filename = saveloc + '/wifi-+' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day))+ "-" + TwoDigits(str(now.hour)) + "+.csv"
+        self.filename = saveloc + '/wifi-+' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day))+ "-"
 
         print('Capturing on ' + interface + ' and writing wifi to ' + self.filename)
 
@@ -291,7 +291,7 @@ class AutoAgentScanThread(Thread):
         return clientVendor
     def exportNetworks(self):
         try:
-            self.outputFile = open(self.filename, 'a')
+            self.outputFile = open(self.filename + TwoDigits(str(now.hour)) + "+.csv", 'a')
         except:
             print('ERROR: Unable to write to wifi file ' + self.filename)
             return
