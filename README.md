@@ -21,6 +21,7 @@ My goal is to generate heatmaps of reception for home and local networks.<br>
 -Sys: Python 3 <br>
 -Sys: GPSd <br>
 -Sys: aircrack-ng suite <br>
+-Sys: sqlite3 <br>
 -Python: geopy <br>
 -Python: gpsd-py3 //I know, I'm silly using 2 GPSd libs at once<br>
 -Python: python-dateutil <br>
