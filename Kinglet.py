@@ -346,7 +346,7 @@ def initstartup(mySettings):
                 time.sleep(14)
             time.sleep(1)
         except Exception as e:
-                mylogger("[Exception]" + str(e.__class__))
+                #mylogger("[Exception]" + str(e.__class__))
                 print("[Exception]" + str(e.__class__))
             #mylogger("Exception Handling: GPS probably isn't active")
             #GPSd-py3 will tell us, no need
