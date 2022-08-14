@@ -49,7 +49,7 @@ def setup_mounts(config):
     """
     global mounts
 
-    size,unit = re.match(r"(\d+)([a-zA-Z]+)", "100M").groups()
+    size,unit = re.match(r"(\d+)([a-zA-Z]+)", "16M").groups()
     target = os.path.join('/run/kinglet/disk/', config)
 
     is_mounted = is_mountpoint(target)
@@ -90,8 +90,8 @@ class MemoryFS:
         return open("/sys/class/zram-control/hot_add", "rt").read().strip("\n")
 
 
-    def __init__(self, mount, disk, size="40M",
-                 zram=True, zram_alg="lz4", zram_disk_size="100M",
+    def __init__(self, mount, disk, size="16M",
+                 zram=True, zram_alg="lz4", zram_disk_size="16M",
                  zram_fs_type="ext4", rsync=True):
         self.mountpoint = mount
         self.disk = disk
