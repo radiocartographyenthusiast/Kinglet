@@ -58,7 +58,7 @@ def setup_mounts(config):
     m = MemoryFS(
         config,
         target,
-        size="100M",
+        size="50M",
         zram=True,
         zram_disk_size=f"{int(size)*2}{unit}",
         rsync=True)

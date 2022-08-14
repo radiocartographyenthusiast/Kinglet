@@ -32,6 +32,7 @@ import re
 import argparse
 import configparser
 # import subprocess
+import sqlite3
 
 from socket import *
 from time import sleep
@@ -179,6 +180,7 @@ class AutoAgentScanThread(Thread):
     global curcnt
     global lastcnt
     global seenpastsec
+    global dbcon
     def __init__(self, interface, dumpLoc):
         global lockList
         eventick = False
@@ -209,9 +211,11 @@ class AutoAgentScanThread(Thread):
 
         now = datetime.now()
 
-        self.filename = saveloc + '/wifi-+' + str(now.year) + "-" + TwoDigits(str(now.month)) + "-" + TwoDigits(str(now.day))+ "-"
+        self.filename = saveloc + '/wifi-+'
+        
+        dbcon = sqlite3.connect('kinglet.dbz')
 
-        print('Capturing on ' + interface + ' and writing wifi to ' + self.filename)
+        print('Capturing on ' + interface + ' and writing wifi to sqlite3')
 
     def run(self):
         
@@ -290,12 +294,6 @@ class AutoAgentScanThread(Thread):
                 clientVendor = ""
         return clientVendor
     def exportNetworks(self):
-        try:
-            self.outputFile = open(self.filename + TwoDigits(str(now.hour)) + "+.csv", 'a')
-        except:
-            print('ERROR: Unable to write to wifi file ' + self.filename)
-            return
-
         #self.outputFile.write('[timestamp],macAddr,vendor,SSID,Security,Privacy,Channel,Frequency,Signal Strength,Strongest Signal Strength,Bandwidth,Latitude,Longitude,\n')
         for netKey in self.discoveredNetworks.keys():
             curData = self.discoveredNetworks[netKey]
@@ -304,10 +302,25 @@ class AutoAgentScanThread(Thread):
                 curData.ssid = "[nsi]"
             if vendor is None:
                 vendor = '[unk]'
-            self.outputFile.write('['+ datetime.now().strftime("%X") + '],' + curData.macAddr  + ',' + vendor + ',"' + curData.ssid + '",' + curData.security + ',' + curData.privacy + 
-                                  ',' + curData.getChannelString() + ',' + str(curData.frequency) + ',' + str(curData.signal) + ',' + str(curData.strongestsignal) + ',' + str(curData.bandwidth) + ',' + str(curData.gps.latitude) + ',' + str(curData.gps.longitude) + ',' + '\n')
-
-        self.outputFile.close()
+            cur = dbcon.cursor()
+            cur.execute('insert into kingletItems values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (
+                str(datetime.now()),
+                curData.macAddr,
+                vendor,
+                curData.ssid,
+                curData.security,
+                curData.privacy, 
+                curData.getChannelString(),
+                str(curData.frequency),
+                str(curData.signal),
+                str(curData.strongestsignal),
+                str(curData.bandwidth),
+                str(curData.gps.latitude),
+                str(curData.gps.longitude) ) )
+            con.commit()
+            #add to sqlite3 kingletItems here
+            
+        #self.outputFile.close()
 
 class kingletLink:
     global iface
