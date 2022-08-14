@@ -1,23 +1,20 @@
-Not sure if I want to go elastic or sql, as this is going to be a mess of nested tables <br>
-I'm considering a table for coords, and each coord pair gets a table of the wifi data logged at that point <br>
 # RasPi WiFi Mapping / Amateur Radiocartography Tool
 ![Image](https://github.com/radiocartographyenthusiast/Kinglet/blob/main/kinglet-ssh.png?raw=true) <br>
 Developed on Raspberry Pi Zero W, intended for all Raspberry Pi and \*nix machines <br>
-0.15 <b>Pre-DB</b> <br>
+0.25 sqlite3 <br>
  <br>
-Your choice between Airodump and Sparrow-Wifi for main monitor source <br>
-Support for a secondary wireless interface, used by Falcon/Airodump in conjunction with Sparrow-WiFi <br>
+Support for a secondary wireless interface<br>
 <br>
-My goal is to generate heatmaps of reception for home and local networks. What I have in mind is thorough but could result in lots of junk data, though, or at least a bulk to digest by something beefier than a Pi0. <br>
+My goal is to generate heatmaps of reception for home and local networks.<br>
  <br>
 ⚠ Reconnect to home wifi upon return is still being tested ⚠ <br>
-⚠ Map to be implemented later ⚠ <br>
-⚠ Database features to be implemented later ⚠ <br>
+⚠ Map partially introduced ⚠ <br>
+⚠ Database features being worked on ⚠ <br>
 ✔ Managing of airodump-ng or Sparrow-WiFi: Kinglet process based on location <br>
 ✔ Start/stop monitor mode automatically <br>
 ✔ Stat logger to track RAM usage, CPU usage, temperature, and disk usage <br>
 ✔ Flask web server, with Waitress <br>
-✔ Pwnagotchi's "zramfs" to prolong the life of the storage device <br>
+✔ zramfs to prolong the life of the storage device <br>
 ✔ Supports up to 2 monitor mode wireless devices at once <br>
  <br>
 <h3>Main Requirements:</h3> <br>
